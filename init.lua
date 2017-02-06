@@ -396,7 +396,7 @@ minetest.register_abm({
 				transfer(inv, {x = pos.x, y = pos.y + 1, z = pos.z}, "main", pos)
 				minetest.get_node_timer(
 					{x = pos.x, y = pos.y + 1, z = pos.z}):start(0.5)
-				return
+--				return
 
 			-- from top hopper into node below
 			elseif where == "bottom" and out == nod
@@ -404,7 +404,7 @@ minetest.register_abm({
 --print ("-- bot")
 				transfer("main", pos, inv, front)
 				minetest.get_node_timer(front):start(0.5)
-				return
+--				return
 
 			-- side hopper into container beside
 			elseif where == "side" and out == nod
@@ -412,7 +412,7 @@ minetest.register_abm({
 --print ("-- sid")
 				transfer("main", pos, inv, front)
 				minetest.get_node_timer(front):start(0.5)
-				return
+--				return
 
 			end
 		end
