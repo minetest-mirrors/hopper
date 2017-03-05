@@ -130,6 +130,11 @@ minetest.register_node("hopper:hopper", {
 		local x = pointed_thing.under.x - pos.x
 		local z = pointed_thing.under.z - pos.z
 
+		if minetest.is_protected(pos, placer:get_player_name()) then
+			minetest.record_protection_violation(pos, placer:get_player_name())
+			return itemstack
+		end
+
 		if x == -1 then
 			minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 0})
 
