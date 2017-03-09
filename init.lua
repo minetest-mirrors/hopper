@@ -327,7 +327,7 @@ minetest.register_abm({
 	action = function(pos, node, active_object_count, active_object_count_wider)
 
 		-- do we have any entities nearby to suck into hopper?
-		if active_object_count > 0 then
+--		if active_object_count > 0 then
 
 		  local inv = minetest.get_meta(pos):get_inventory()
 
@@ -350,7 +350,7 @@ minetest.register_abm({
 				end
 			end
 		  end
-		end
+--		end
 
 
 		local front
