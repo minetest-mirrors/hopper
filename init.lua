@@ -168,7 +168,7 @@ minetest.register_node("hopper:hopper", {
 	on_rightclick = function(pos, node, clicker, itemstack)
 
 		if minetest.is_protected(pos, clicker:get_player_name()) then
-			return
+			return itemstack
 		end
 
 		minetest.show_formspec(clicker:get_player_name(),
@@ -194,6 +194,7 @@ minetest.register_node("hopper:hopper", {
 	end,
 
 	on_rotate = screwdriver.disallow,
+	on_blast = function() end,
 })
 
 
@@ -244,7 +245,7 @@ minetest.register_node("hopper:hopper_side", {
 	on_rightclick = function(pos, node, clicker, itemstack)
 
 		if minetest.is_protected(pos, clicker:get_player_name()) then
-			return
+			return itemstack
 		end
 
 		minetest.show_formspec(clicker:get_player_name(),
@@ -270,6 +271,7 @@ minetest.register_node("hopper:hopper_side", {
 	end,
 
 	on_rotate = screwdriver.rotate_simple,
+	on_blast = function() end,
 })
 
 
@@ -326,12 +328,9 @@ minetest.register_abm({
 
 	action = function(pos, node, active_object_count, active_object_count_wider)
 
-		-- do we have any entities nearby to suck into hopper?
---		if active_object_count > 0 then
+		local inv = minetest.get_meta(pos):get_inventory()
 
-		  local inv = minetest.get_meta(pos):get_inventory()
-
-		  for _,object in pairs(minetest.get_objects_inside_radius(pos, 1)) do
+		for _,object in pairs(minetest.get_objects_inside_radius(pos, 1)) do
 
 			if not object:is_player()
 			and object:get_luaentity()
@@ -349,8 +348,7 @@ minetest.register_abm({
 					object:remove()
 				end
 			end
-		  end
---		end
+		end
 
 
 		local front
