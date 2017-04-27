@@ -100,7 +100,7 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 	local z = pointed_thing.under.z - pos.z
 	local name = placer:get_player_name() or ""
 
-	if minetest.is_protected(pos, placer:get_player_name()) then
+	if minetest.is_protected(pos, name) then
 		minetest.record_protection_violation(pos, name)
 		return itemstack
 	end

@@ -7,7 +7,7 @@ Hoppers allow for items dropped on top to be sucked in and transfered to chests/
 Change log:
 
 - 0.1 - Initial release from jordan4ibanez
-- 0.2 - Fixed tool glitch (wear restored by accident)
+- 0.2 - Fixed tool glitch (wear was restored by accident)
 - 0.3 - transfer function added
 - 0.4 - Supports locked chest and protected chest
 - 0.5 - Works with 0.4.13's new shift+click for newly placed Hoppers
@@ -19,5 +19,6 @@ Change log:
 - 1.1 - Hoppers now work with new node timer Furnaces.  Reduced Abm's and tidied code
 - 1.2 - Added simple API so that hoppers can work with other containers
 - 1.3 - Tweaked code to use a single abm and added intllib support
+- 1.4 - Simplified hopper placement function and added some nil checks
 
 Lucky Blocks: 2
