@@ -92,6 +92,51 @@ local function get_hopper_formspec(pos)
 end
 
 
+-- check where pointing and set normal or side-hopper
+local hopper_place = function(itemstack, placer, pointed_thing)
+
+	local pos = pointed_thing.above
+	local x = pointed_thing.under.x - pos.x
+	local z = pointed_thing.under.z - pos.z
+	local name = placer:get_player_name() or ""
+
+	if minetest.is_protected(pos, placer:get_player_name()) then
+		minetest.record_protection_violation(pos, name)
+		return itemstack
+	end
+
+	if x == -1 then
+		minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 0})
+
+	elseif x == 1 then
+		minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 2})
+
+	elseif z == -1 then
+		minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 3})
+
+	elseif z == 1 then
+		minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 1})
+
+	else
+		minetest.set_node(pos, {name = "hopper:hopper"})
+	end
+
+	if not minetest.setting_getbool("creative_mode") then
+		itemstack:take_item()
+	end
+
+	-- set metadata
+	local meta = minetest.get_meta(pos)
+	local inv = meta:get_inventory()
+
+	inv:set_size("main", 4*4)
+
+	meta:set_string("owner", name)
+
+	return itemstack
+end
+
+
 -- hopper
 minetest.register_node("hopper:hopper", {
 	description = S("Hopper (Place onto sides for side-hopper)"),
@@ -116,47 +161,7 @@ minetest.register_node("hopper:hopper", {
 		},
 	},
 
-	on_construct = function(pos)
-
-		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-
-		inv:set_size("main", 4*4)
-	end,
-
-	on_place = function(itemstack, placer, pointed_thing)
-
-		local pos = pointed_thing.above
-		local x = pointed_thing.under.x - pos.x
-		local z = pointed_thing.under.z - pos.z
-
-		if minetest.is_protected(pos, placer:get_player_name()) then
-			minetest.record_protection_violation(pos, placer:get_player_name())
-			return itemstack
-		end
-
-		if x == -1 then
-			minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 0})
-
-		elseif x == 1 then
-			minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 2})
-
-		elseif z == -1 then
-			minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 3})
-
-		elseif z == 1 then
-			minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 1})
-
-		else
-			minetest.set_node(pos, {name = "hopper:hopper"})
-		end
-
-		if not minetest.setting_getbool("creative_mode") then
-			itemstack:take_item()
-		end
-
-		return itemstack
-	end,
+	on_place = hopper_place,
 
 	can_dig = function(pos, player)
 
@@ -167,7 +172,8 @@ minetest.register_node("hopper:hopper", {
 
 	on_rightclick = function(pos, node, clicker, itemstack)
 
-		if minetest.is_protected(pos, clicker:get_player_name()) then
+		if not minetest.get_meta(pos)
+		or minetest.is_protected(pos, clicker:get_player_name()) then
 			return itemstack
 		end
 
@@ -227,13 +233,7 @@ minetest.register_node("hopper:hopper_side", {
 		},
 	},
 
-	on_construct = function(pos)
-
-		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-
-		inv:set_size("main", 4*4)
-	end,
+	on_place = hopper_place,
 
 	can_dig = function(pos, player)
 
@@ -244,7 +244,8 @@ minetest.register_node("hopper:hopper_side", {
 
 	on_rightclick = function(pos, node, clicker, itemstack)
 
-		if minetest.is_protected(pos, clicker:get_player_name()) then
+		if not minetest.get_meta(pos)
+		or minetest.is_protected(pos, clicker:get_player_name()) then
 			return itemstack
 		end
 
@@ -395,27 +396,24 @@ minetest.register_abm({
 			-- from top node into hopper below
 			if where == "top" and top == nod
 			and (node.name == "hopper:hopper" or node.name == "hopper:hopper_side") then
---print ("-- top")
+
 				transfer(inv, {x = pos.x, y = pos.y + 1, z = pos.z}, "main", pos)
 				minetest.get_node_timer(
 					{x = pos.x, y = pos.y + 1, z = pos.z}):start(0.5)
---				return
 
 			-- from top hopper into node below
 			elseif where == "bottom" and out == nod
 			and node.name == "hopper:hopper" then
---print ("-- bot")
+
 				transfer("main", pos, inv, front)
 				minetest.get_node_timer(front):start(0.5)
---				return
 
 			-- side hopper into container beside
 			elseif where == "side" and out == nod
 			and node.name == "hopper:hopper_side" then
---print ("-- sid")
+
 				transfer("main", pos, inv, front)
 				minetest.get_node_timer(front):start(0.5)
---				return
 
 			end
 		end
