@@ -40,6 +40,13 @@ local containers = {
 
 	{"bottom", "default:chest_locked", "main"},
 	{"side", "default:chest_locked", "main"},
+
+	{"top", "default:chest", "default:chest"}, --  new animated chests
+	{"bottom", "default:chest", "default:chest"},
+	{"side", "default:chest", "default:chest"},
+
+	{"bottom", "default:chest_locked", "default:chest"},
+	{"side", "default:chest_locked", "default:chest"},
 }
 
 -- global function to add new containers
