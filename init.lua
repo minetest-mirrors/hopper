@@ -17,6 +17,12 @@ else
 
 end
 
+-- creative check
+local creative_mode_cache = minetest.settings:get_bool("creative_mode")
+function check_creative(name)
+	return creative_mode_cache or minetest.check_player_privs(name, {creative = true})
+end
+
 
 -- default containers
 local containers = {
@@ -128,7 +134,7 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 		minetest.set_node(pos, {name = "hopper:hopper"})
 	end
 
-	if not minetest.setting_getbool("creative_mode") then
+	if not check_creative(placer:get_player_name()) then
 		itemstack:take_item()
 	end
 
