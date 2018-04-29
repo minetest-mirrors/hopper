@@ -21,6 +21,6 @@ Change log:
 - 1.3 - Tweaked code to use a single abm and added intllib support
 - 1.4 - Simplified hopper placement function and added some nil checks
 - 1.5 - Updating to newer functions, requires Minetest 0.4.16 and above.
-- 1.6 - Added Void Hopper (use to set container output, requires teleport potion for recipe :)
+- 1.6 - Added Void Hopper (use to set container output before placing)
 
 Lucky Blocks: 2

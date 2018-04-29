@@ -611,6 +611,14 @@ if minetest.get_modpath("teleport_potion") then
 			{"teleport_potion:potion", "default:steel_ingot", "teleport_potion:potion"},
 		},
 	})
+else
+	minetest.register_craft({
+		output = "hopper:hopper_void",
+		recipe = {
+			{"default:steel_ingot", "default:chest", "default:steel_ingot"},
+			{"default:diamondblock", "default:steel_ingot", "default:mese"},
+		},
+	})
 end
 
 
