@@ -53,6 +53,14 @@ local containers = {
 
 	{"bottom", "default:chest_locked_open", "main"},
 	{"side", "default:chest_locked_open", "main"},
+
+	{"void", "hopper:hopper", "main"},
+	{"void", "hopper:hopper_side", "main"},
+	{"void", "hopper:hopper_void", "main"},
+	{"void", "default:chest", "main"},
+	{"void", "default:chest_open", "main"},
+	{"void", "default:furnace", "src"},
+	{"void", "default:furnace_active", "src"},
 }
 
 -- global function to add new containers
@@ -71,6 +79,7 @@ if minetest.get_modpath("protector") then
 		{"top", "protector:chest", "main"},
 		{"bottom", "protector:chest", "main"},
 		{"side", "protector:chest", "main"},
+		{"void", "protector:chest", "main"},
 	})
 end
 
@@ -82,6 +91,7 @@ if minetest.get_modpath("wine") then
 		{"top", "wine:wine_barrel", "dst"},
 		{"bottom", "wine:wine_barrel", "src"},
 		{"side", "wine:wine_barrel", "src"},
+		{"void", "wine:wine_barrel", "src"},
 	})
 end
 
@@ -289,6 +299,130 @@ minetest.register_node("hopper:hopper_side", {
 })
 
 
+local player_void = {}
+
+-- void hopper
+minetest.register_node("hopper:hopper_void", {
+	description = S("Void Hopper (Use first to set destination container)"),
+	groups = {cracky = 3},
+	drawtype = "nodebox",
+	paramtype = "light",
+	tiles = {"hopper_top.png", "hopper_top.png", "hopper_front.png"},
+	inventory_image = "default_obsidian.png^hopper_inv.png",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			--funnel walls
+			{-0.5, 0.0, 0.4, 0.5, 0.5, 0.5},
+			{0.4, 0.0, -0.5, 0.5, 0.5, 0.5},
+			{-0.5, 0.0, -0.5, -0.4, 0.5, 0.5},
+			{-0.5, 0.0, -0.5, 0.5, 0.5, -0.4},
+			--funnel base
+			{-0.5, 0.0, -0.5, 0.5, 0.1, 0.5},
+		},
+	},
+
+	on_use = function(itemstack, player, pointed_thing)
+
+		local pos = pointed_thing.under
+		local name = player:get_player_name()
+		local node = minetest.get_node(pos).name
+		local ok
+
+		if minetest.is_protected(pos, name) then
+			minetest.record_protection_violation(pos, name)
+			return itemstack
+		end
+
+		for _ = 1, #containers do
+			if node == containers[_][2] then
+				ok = true
+			end
+		end
+
+		if ok then
+			minetest.chat_send_player(name, S("Output container set"
+				.. " " .. minetest.pos_to_string(pos)))
+			player_void[name] = pos
+		else
+			minetest.chat_send_player(name, S("Not a registered container!"))
+			player_void[name] = nil
+		end
+	end,
+
+	on_place = function(itemstack, placer, pointed_thing)
+
+		local pos = pointed_thing.above
+		local name = placer:get_player_name() or ""
+
+		if not player_void[name] then
+			minetest.chat_send_player(name, S("No container position set!"))
+			return itemstack
+		end
+
+		if minetest.is_protected(pos, name) then
+			minetest.record_protection_violation(pos, name)
+			return itemstack
+		end
+
+		if not check_creative(placer:get_player_name()) then
+			itemstack:take_item()
+		end
+
+		minetest.set_node(pos, {name = "hopper:hopper_void", param2 = 0})
+
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+
+		inv:set_size("main", 4*4)
+
+		meta:set_string("owner", name)
+		meta:set_string("void", minetest.pos_to_string(player_void[name]))
+
+		return itemstack
+	end,
+
+	can_dig = function(pos, player)
+
+		local inv = minetest.get_meta(pos):get_inventory()
+
+		return inv:is_empty("main")
+	end,
+
+	on_rightclick = function(pos, node, clicker, itemstack)
+
+		if not minetest.get_meta(pos)
+		or minetest.is_protected(pos, clicker:get_player_name()) then
+			return itemstack
+		end
+
+		minetest.show_formspec(clicker:get_player_name(),
+			"hopper:hopper", get_hopper_formspec(pos))
+	end,
+
+	on_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
+
+		minetest.log("action", S("@1 moves stuff in void hopper at @2",
+			player:get_player_name(), minetest.pos_to_string(pos)))
+	end,
+
+	on_metadata_inventory_put = function(pos, listname, index, stack, player)
+
+		minetest.log("action", S("@1 moves stuff into void hopper at @2",
+			player:get_player_name(), minetest.pos_to_string(pos)))
+	end,
+
+	on_metadata_inventory_take = function(pos, listname, index, stack, player)
+
+		minetest.log("action", S("@1 moves stuff from void hopper at @2",
+			player:get_player_name(), minetest.pos_to_string(pos)))
+	end,
+
+	on_rotate = screwdriver.disallow,
+	on_blast = function() end,
+})
+
+
 -- transfer function
 local transfer = function(src, srcpos, dst, dstpos)
 
@@ -335,7 +469,7 @@ end
 minetest.register_abm({
 
 	label = "Hopper suction and transfer",
-	nodenames = {"hopper:hopper", "hopper:hopper_side"},
+	nodenames = {"hopper:hopper", "hopper:hopper_side", "hopper:hopper_void"},
 	interval = 1.0,
 	chance = 1,
 	catch_up = false,
@@ -386,9 +520,20 @@ minetest.register_abm({
 			else
 				return
 			end
-		else
+
+		elseif node.name == "hopper:hopper_void" then
+
+			local meta = minetest.get_meta(pos)
+
+			if not meta then return end
+
+			front = minetest.string_to_pos(meta:get_string("void"))
+
+		elseif node.name == "hopper:hopper" then
 			-- otherwise normal hopper, output downwards
 			front = {x = pos.x, y = pos.y - 1, z = pos.z}
+		else
+			return
 		end
 
 		-- get node above hopper
@@ -408,7 +553,9 @@ minetest.register_abm({
 
 			-- from top node into hopper below
 			if where == "top" and top == nod
-			and (node.name == "hopper:hopper" or node.name == "hopper:hopper_side") then
+			and (node.name == "hopper:hopper"
+			or node.name == "hopper:hopper_side"
+			or node.name == "hopper:hopper_void") then
 
 				transfer(inv, {x = pos.x, y = pos.y + 1, z = pos.z}, "main", pos)
 				minetest.get_node_timer(
@@ -428,6 +575,11 @@ minetest.register_abm({
 				transfer("main", pos, inv, front)
 				minetest.get_node_timer(front):start(0.5)
 
+			-- void hopper to destination container
+			elseif where == "void" and out == nod
+			and node.name == "hopper:hopper_void" then
+				transfer("main", pos, inv, front)
+				minetest.get_node_timer(front):start(0.5)
 			end
 		end
 	end,
@@ -449,6 +601,18 @@ minetest.register_craft({
 	output = "hopper:hopper",
 	recipe = {"hopper:hopper_side"},
 })
+
+-- void hopper recipe
+if minetest.get_modpath("teleport_potion") then
+	minetest.register_craft({
+		output = "hopper:hopper_void",
+		recipe = {
+			{"default:steel_ingot", "default:chest", "default:steel_ingot"},
+			{"teleport_potion:potion", "default:steel_ingot", "teleport_potion:potion"},
+		},
+	})
+end
+
 
 -- add lucky blocks
 if minetest.get_modpath("lucky_block") then
