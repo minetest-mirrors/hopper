@@ -324,6 +324,10 @@ minetest.register_node("hopper:hopper_void", {
 
 	on_use = function(itemstack, player, pointed_thing)
 
+		if pointed_thing.type ~= "node" then
+			return
+		end
+
 		local pos = pointed_thing.under
 		local name = player:get_player_name()
 		local node = minetest.get_node(pos).name
