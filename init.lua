@@ -6,7 +6,9 @@ hopper = {}
 -- Intllib
 local S
 
-if minetest.get_modpath("intllib") then
+if minetest.get_translator then
+	S = minetest.get_translator("hopper")
+elseif minetest.get_modpath("intllib") then
 	S = intllib.Getter()
 else
 	S = function(s, a, ...) a = {a, ...}
