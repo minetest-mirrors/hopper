@@ -493,7 +493,7 @@ minetest.register_abm({
 			and inv:room_for_item("main",
 				ItemStack(object:get_luaentity().itemstring)) then
 
-				if object:get_pos().y - pos.y >= 0.3 then
+				if object:get_pos().y - pos.y > 0.25 then
 
 					inv:add_item("main",
 						ItemStack(object:get_luaentity().itemstring))
