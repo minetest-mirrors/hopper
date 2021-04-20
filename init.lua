@@ -62,7 +62,7 @@ local containers = {
 	{"void", "default:chest", "main"},
 	{"void", "default:chest_open", "main"},
 	{"void", "default:furnace", "src"},
-	{"void", "default:furnace_active", "src"},
+	{"void", "default:furnace_active", "src"}
 }
 
 -- global function to add new containers
@@ -81,7 +81,7 @@ if minetest.get_modpath("protector") then
 		{"top", "protector:chest", "main"},
 		{"bottom", "protector:chest", "main"},
 		{"side", "protector:chest", "main"},
-		{"void", "protector:chest", "main"},
+		{"void", "protector:chest", "main"}
 	})
 end
 
@@ -93,7 +93,7 @@ if minetest.get_modpath("wine") then
 		{"top", "wine:wine_barrel", "dst"},
 		{"bottom", "wine:wine_barrel", "src"},
 		{"side", "wine:wine_barrel", "src"},
-		{"void", "wine:wine_barrel", "src"},
+		{"void", "wine:wine_barrel", "src"}
 	})
 end
 
@@ -168,6 +168,7 @@ minetest.register_node("hopper:hopper", {
 	groups = {cracky = 3},
 	drawtype = "nodebox",
 	paramtype = "light",
+	use_texture_alpha = "clip",
 	tiles = {"hopper_top.png", "hopper_top.png", "hopper_front.png"},
 	inventory_image = "hopper_inv.png",
 	node_box = {
@@ -182,8 +183,8 @@ minetest.register_node("hopper:hopper", {
 			{-0.5, 0.0, -0.5, 0.5, 0.1, 0.5},
 			--spout
 			{-0.3, -0.3, -0.3, 0.3, 0.0, 0.3},
-			{-0.15, -0.3, -0.15, 0.15, -0.5, 0.15},
-		},
+			{-0.15, -0.3, -0.15, 0.15, -0.5, 0.15}
+		}
 	},
 
 	on_place = hopper_place,
@@ -206,7 +207,8 @@ minetest.register_node("hopper:hopper", {
 			"hopper:hopper", get_hopper_formspec(pos))
 	end,
 
-	on_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
+	on_metadata_inventory_move = function(
+			pos, from_list, from_index, to_list, to_index, count, player)
 
 		minetest.log("action", S("@1 moves stuff in hopper at @2",
 			player:get_player_name(), minetest.pos_to_string(pos)))
@@ -225,7 +227,7 @@ minetest.register_node("hopper:hopper", {
 	end,
 
 	on_rotate = screwdriver.disallow,
-	on_blast = function() end,
+	on_blast = function() end
 })
 
 
@@ -235,6 +237,7 @@ minetest.register_node("hopper:hopper_side", {
 	groups = {cracky = 3, not_in_creative_inventory = 1},
 	drawtype = "nodebox",
 	paramtype = "light",
+	use_texture_alpha = "clip",
 	paramtype2 = "facedir",
 	tiles = {
 		"hopper_top.png", "hopper_top.png", "hopper_back.png",
@@ -254,8 +257,8 @@ minetest.register_node("hopper:hopper_side", {
 			{-0.5, 0.0, -0.5, 0.5, 0.1, 0.5},
 			--spout
 			{-0.3, -0.3, -0.3, 0.3, 0.0, 0.3},
-			{-0.7, -0.3, -0.15, 0.15, 0.0, 0.15},
-		},
+			{-0.7, -0.3, -0.15, 0.15, 0.0, 0.15}
+		}
 	},
 
 	on_place = hopper_place,
@@ -278,7 +281,8 @@ minetest.register_node("hopper:hopper_side", {
 			"hopper:hopper_side", get_hopper_formspec(pos))
 	end,
 
-	on_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
+	on_metadata_inventory_move = function(
+			pos, from_list, from_index, to_list, to_index, count, player)
 
 		minetest.log("action", S("@1 moves stuff in hopper at @2",
 			player:get_player_name(), minetest.pos_to_string(pos)))
@@ -297,7 +301,7 @@ minetest.register_node("hopper:hopper_side", {
 	end,
 
 	on_rotate = screwdriver.rotate_simple,
-	on_blast = function() end,
+	on_blast = function() end
 })
 
 
@@ -309,6 +313,7 @@ minetest.register_node("hopper:hopper_void", {
 	groups = {cracky = 3},
 	drawtype = "nodebox",
 	paramtype = "light",
+	use_texture_alpha = "clip",
 	tiles = {"hopper_top.png", "hopper_top.png", "hopper_front.png"},
 	inventory_image = "default_obsidian.png^hopper_inv.png",
 	node_box = {
@@ -320,8 +325,8 @@ minetest.register_node("hopper:hopper_void", {
 			{-0.5, 0.0, -0.5, -0.4, 0.5, 0.5},
 			{-0.5, 0.0, -0.5, 0.5, 0.5, -0.4},
 			--funnel base
-			{-0.5, 0.0, -0.5, 0.5, 0.1, 0.5},
-		},
+			{-0.5, 0.0, -0.5, 0.5, 0.1, 0.5}
+		}
 	},
 
 	on_use = function(itemstack, player, pointed_thing)
@@ -406,7 +411,8 @@ minetest.register_node("hopper:hopper_void", {
 			"hopper:hopper", get_hopper_formspec(pos))
 	end,
 
-	on_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
+	on_metadata_inventory_move = function(
+			pos, from_list, from_index, to_list, to_index, count, player)
 
 		minetest.log("action", S("@1 moves stuff in void hopper at @2",
 			player:get_player_name(), minetest.pos_to_string(pos)))
@@ -425,7 +431,7 @@ minetest.register_node("hopper:hopper_void", {
 	end,
 
 	on_rotate = screwdriver.disallow,
-	on_blast = function() end,
+	on_blast = function() end
 })
 
 
@@ -597,15 +603,15 @@ minetest.register_craft({
 	output = "hopper:hopper",
 	recipe = {
 		{"default:steel_ingot", "default:chest", "default:steel_ingot"},
-		{"", "default:steel_ingot", ""},
-	},
+		{"", "default:steel_ingot", ""}
+	}
 })
 
 -- side hopper to hopper recipe
 minetest.register_craft({
-	type = "shapeless",
+	--type = "shapeless",
 	output = "hopper:hopper",
-	recipe = {"hopper:hopper_side"},
+	recipe = {{"hopper:hopper_side"}}
 })
 
 -- void hopper recipe
@@ -614,16 +620,16 @@ if minetest.get_modpath("teleport_potion") then
 		output = "hopper:hopper_void",
 		recipe = {
 			{"default:steel_ingot", "default:chest", "default:steel_ingot"},
-			{"teleport_potion:potion", "default:steel_ingot", "teleport_potion:potion"},
-		},
+			{"teleport_potion:potion", "default:steel_ingot", "teleport_potion:potion"}
+		}
 	})
 else
 	minetest.register_craft({
 		output = "hopper:hopper_void",
 		recipe = {
 			{"default:steel_ingot", "default:chest", "default:steel_ingot"},
-			{"default:diamondblock", "default:steel_ingot", "default:mese"},
-		},
+			{"default:diamondblock", "default:steel_ingot", "default:mese"}
+		}
 	})
 end
 
@@ -633,7 +639,7 @@ if minetest.get_modpath("lucky_block") then
 
 	lucky_block:add_blocks({
 		{"dro", {"hopper:hopper"}, 3},
-		{"nod", "default:lava_source", 1},
+		{"nod", "default:lava_source", 1}
 	})
 end
 
