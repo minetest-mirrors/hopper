@@ -389,6 +389,8 @@ minetest.register_node("hopper:hopper_void", {
 
 		meta:set_string("owner", name)
 		meta:set_string("void", minetest.pos_to_string(player_void[name]))
+		meta:set_string("infotext", "Void Hopper\nConnected to " ..
+				minetest.pos_to_string(player_void[name]))
 
 		return itemstack
 	end,
