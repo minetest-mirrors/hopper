@@ -130,6 +130,13 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 		return itemstack
 	end
 
+	-- make sure we aren't replacing something we shouldnt
+	local node = minetest.get_node_or_nil(pos)
+	local def = node and minetest.registered_nodes[node.name]
+	if def and not def.buildable_to then
+		return itemstack
+	end
+
 	if x == -1 then
 		minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 0})
 
