@@ -458,23 +458,25 @@ local transfer = function(src, srcpos, dst, dstpos)
 		return
 	end
 
-	local stack, item
+	local stack, item, max
 
 	-- transfer item
 	for i = 1, inv:get_size(src) do
 
 		stack = inv:get_stack(src, i)
 		item = stack:get_name()
+		max = stack:get_stack_max()
 
 		-- if slot not empty and room for item in destination
 		if item ~= ""
 		and inv2:room_for_item(dst, item) then
 
-			-- is item a tool
-			if stack:get_wear() > 0 then
-				inv2:add_item(dst, stack:take_item(stack:get_count()))
+			-- stack max of 1 is usually for tools or items with metadata
+			if max == 1 then
+				inv2:add_item(dst, stack)
 				inv:set_stack(src, i, nil)
-			else -- not a tool
+
+			else -- everything else that can be stacked
 				stack:take_item(1)
 				inv2:add_item(dst, item)
 				inv:set_stack(src, i, stack)
