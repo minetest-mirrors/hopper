@@ -383,6 +383,13 @@ minetest.register_node("hopper:hopper_void", {
 			return itemstack
 		end
 
+		-- make sure we aren't replacing something we shouldnt
+		local node = minetest.get_node_or_nil(pos)
+		local def = node and minetest.registered_nodes[node.name]
+		if def and not def.buildable_to then
+			return itemstack
+		end
+
 		if not check_creative(placer:get_player_name()) then
 			itemstack:take_item()
 		end
