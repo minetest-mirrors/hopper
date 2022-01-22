@@ -46,6 +46,7 @@ local containers = {
 	{"bottom", "default:furnace_active", "src"},
 	{"side", "default:furnace_active", "fuel"},
 
+	{"top", "default:chest_locked", "main"}, -- checks owner before taking items
 	{"bottom", "default:chest_locked", "main"},
 	{"side", "default:chest_locked", "main"},
 
@@ -53,6 +54,7 @@ local containers = {
 	{"bottom", "default:chest_open", "main"},
 	{"side", "default:chest_open", "main"},
 
+	{"top", "default:chest_locked_open", "main"}, -- checks owner before taking items
 	{"bottom", "default:chest_locked_open", "main"},
 	{"side", "default:chest_locked_open", "main"},
 
@@ -217,20 +219,20 @@ minetest.register_node("hopper:hopper", {
 	on_metadata_inventory_move = function(
 			pos, from_list, from_index, to_list, to_index, count, player)
 
-		minetest.log("action", S("@1 moves stuff in hopper at @2",
-			player:get_player_name(), minetest.pos_to_string(pos)))
+		minetest.log("action", player:get_player_name()
+			.. " moves stuff in hopper at " .. minetest.pos_to_string(pos))
 	end,
 
 	on_metadata_inventory_put = function(pos, listname, index, stack, player)
 
-		minetest.log("action", S("@1 moves stuff to hopper at @2",
-			player:get_player_name(), minetest.pos_to_string(pos)))
+		minetest.log("action", player:get_player_name()
+			.. " moves stuff to hopper at " .. minetest.pos_to_string(pos))
 	end,
 
 	on_metadata_inventory_take = function(pos, listname, index, stack, player)
 
-		minetest.log("action", S("@1 moves stuff from hopper at @2",
-			player:get_player_name(), minetest.pos_to_string(pos)))
+		minetest.log("action", player:get_player_name()
+			.. " moves stuff from hopper at " .. minetest.pos_to_string(pos))
 	end,
 
 	on_rotate = screwdriver.disallow,
@@ -291,20 +293,20 @@ minetest.register_node("hopper:hopper_side", {
 	on_metadata_inventory_move = function(
 			pos, from_list, from_index, to_list, to_index, count, player)
 
-		minetest.log("action", S("@1 moves stuff in hopper at @2",
-			player:get_player_name(), minetest.pos_to_string(pos)))
+		minetest.log("action", player:get_player_name()
+			.. " moves stuff in side hopper at " .. minetest.pos_to_string(pos))
 	end,
 
 	on_metadata_inventory_put = function(pos, listname, index, stack, player)
 
-		minetest.log("action", S("@1 moves stuff to hopper at @2",
-			player:get_player_name(), minetest.pos_to_string(pos)))
+		minetest.log("action", player:get_player_name()
+			.. " moves stuff to side hopper at " .. minetest.pos_to_string(pos))
 	end,
 
 	on_metadata_inventory_take = function(pos, listname, index, stack, player)
 
-		minetest.log("action", S("@1 moves stuff from hopper at @2",
-			player:get_player_name(), minetest.pos_to_string(pos)))
+		minetest.log("action", player:get_player_name()
+			.. " moves stuff from side hopper at " .. minetest.pos_to_string(pos))
 	end,
 
 	on_rotate = screwdriver.rotate_simple,
@@ -430,20 +432,20 @@ minetest.register_node("hopper:hopper_void", {
 	on_metadata_inventory_move = function(
 			pos, from_list, from_index, to_list, to_index, count, player)
 
-		minetest.log("action", S("@1 moves stuff in void hopper at @2",
-			player:get_player_name(), minetest.pos_to_string(pos)))
+		minetest.log("action", player:get_player_name()
+			.. " moves stuff in void hopper at " .. minetest.pos_to_string(pos))
 	end,
 
 	on_metadata_inventory_put = function(pos, listname, index, stack, player)
 
-		minetest.log("action", S("@1 moves stuff into void hopper at @2",
-			player:get_player_name(), minetest.pos_to_string(pos)))
+		minetest.log("action", player:get_player_name()
+			.." moves stuff into void hopper at " .. minetest.pos_to_string(pos))
 	end,
 
 	on_metadata_inventory_take = function(pos, listname, index, stack, player)
 
-		minetest.log("action", S("@1 moves stuff from void hopper at @2",
-			player:get_player_name(), minetest.pos_to_string(pos)))
+		minetest.log("action", player:get_player_name()
+			.. " moves stuff from void hopper at " .. minetest.pos_to_string(pos))
 	end,
 
 	on_rotate = screwdriver.disallow,
@@ -500,7 +502,7 @@ minetest.register_abm({
 
 	label = "Hopper suction and transfer",
 	nodenames = {"hopper:hopper", "hopper:hopper_side", "hopper:hopper_void"},
-	interval = 1.0,
+	interval = 1,
 	chance = 1,
 	catch_up = false,
 
@@ -528,25 +530,24 @@ minetest.register_abm({
 			end
 		end
 
-
-		local front
+		local dst_pos
 
 		-- if side hopper check which way spout is facing
 		if node.name == "hopper:hopper_side" then
 
-			local face = minetest.get_node(pos).param2
+			local face = node.param2
 
 			if face == 0 then
-				front = {x = pos.x - 1, y = pos.y, z = pos.z}
+				dst_pos = {x = pos.x - 1, y = pos.y, z = pos.z}
 
 			elseif face == 1 then
-				front = {x = pos.x, y = pos.y, z = pos.z + 1}
+				dst_pos = {x = pos.x, y = pos.y, z = pos.z + 1}
 
 			elseif face == 2 then
-				front = {x = pos.x + 1, y = pos.y, z = pos.z}
+				dst_pos = {x = pos.x + 1, y = pos.y, z = pos.z}
 
 			elseif face == 3 then
-				front = {x = pos.x, y = pos.y, z = pos.z - 1}
+				dst_pos = {x = pos.x, y = pos.y, z = pos.z - 1}
 			else
 				return
 			end
@@ -557,62 +558,72 @@ minetest.register_abm({
 
 			if not meta then return end
 
-			front = minetest.string_to_pos(meta:get_string("void"))
+			dst_pos = minetest.string_to_pos(meta:get_string("void"))
 
 		elseif node.name == "hopper:hopper" then
 			-- otherwise normal hopper, output downwards
-			front = {x = pos.x, y = pos.y - 1, z = pos.z}
+			dst_pos = {x = pos.x, y = pos.y - 1, z = pos.z}
 		else
 			return
 		end
 
 		-- get node above hopper
-		local top = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name
+		local src_pos = {x = pos.x, y = pos.y + 1, z = pos.z}
+		local src_name = minetest.get_node(src_pos).name
 
 		-- get node at other end of spout
-		local out = minetest.get_node(front).name
+		local dst_name = minetest.get_node(dst_pos).name
 
-		local where, nod, inv, def
+
+
+		-- hopper owner
+		local owner = minetest.get_meta(pos):get_string("owner")
+
+		if minetest.check_player_privs(owner, "protection_bypass") then
+			owner = ""
+		end
+
+		local to
+		if node.name == "hopper:hopper" then
+			to = "bottom"
+		elseif node.name == "hopper:hopper_side" then
+			to = "side"
+		elseif node.name == "hopper:hopper_void" then
+			to = "void"
+		end
+
+		local where, name, inv, def, src_inv, dst_inv
 
 		-- do for loop here for api check
 		for n = 1, #containers do
 
 			where = containers[n][1]
-			nod = containers[n][2]
+			name = containers[n][2]
 			inv = containers[n][3]
 
-			-- from top node into hopper below
-			if where == "top" and top == nod
-			and (node.name == "hopper:hopper"
-			or node.name == "hopper:hopper_side"
-			or node.name == "hopper:hopper_void") then
-
-				transfer(inv, {x = pos.x, y = pos.y + 1, z = pos.z}, "main", pos)
-				minetest.get_node_timer(
-					{x = pos.x, y = pos.y + 1, z = pos.z}):start(1)--0.5)
-
-			-- from top hopper into node below
-			elseif where == "bottom" and out == nod
-			and node.name == "hopper:hopper" then
-
-				transfer("main", pos, inv, front)
-				minetest.get_node_timer(front):start(1)--0.5)
-
-			-- side hopper into container beside
-			elseif where == "side" and out == nod
-			and node.name == "hopper:hopper_side" then
-
-				transfer("main", pos, inv, front)
-				minetest.get_node_timer(front):start(1)--0.5)
-
-			-- void hopper to destination container
-			elseif where == "void" and out == nod
-			and node.name == "hopper:hopper_void" then
-				transfer("main", pos, inv, front)
-				minetest.get_node_timer(front):start(1)--0.5)
+			if where == "top" and src_name == name then
+				src_inv = inv -- from hopper into destionation container
+			elseif where == to and dst_name == name then
+				dst_inv = inv
 			end
 		end
-	end,
+
+		if owner == "" or owner == minetest.get_meta(src_pos):get_string("owner") then
+
+			if src_inv then
+				transfer(src_inv, src_pos, "main", pos)
+				minetest.get_node_timer(src_pos):start(1)
+			end
+		end
+
+		if owner == "" or owner == minetest.get_meta(dst_pos):get_string("owner") then
+
+			if dst_inv then
+				transfer("main", pos, dst_inv, dst_pos)
+				minetest.get_node_timer(dst_pos):start(1)
+			end
+		end
+	end
 })
 
 
@@ -627,7 +638,6 @@ minetest.register_craft({
 
 -- side hopper to hopper recipe
 minetest.register_craft({
-	--type = "shapeless",
 	output = "hopper:hopper",
 	recipe = {{"hopper:hopper_side"}}
 })
@@ -662,4 +672,4 @@ if minetest.get_modpath("lucky_block") then
 end
 
 
-print (S("[MOD] Hopper loaded"))
+print ("[MOD] Hopper loaded")
