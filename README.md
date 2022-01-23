@@ -23,5 +23,6 @@ Change log:
 - 1.5 - Updating to newer functions, requires Minetest 0.4.16 and above.
 - 1.6 - Added Void Hopper (use to set container output before placing)
 - 1.7 - Optimized code and added container owner check (thanks nixnoxus)
+- 1.8 - Added container autodetection with setting "lazy_container_support" (thanks nixnoxus)
 
 Lucky Blocks: 2

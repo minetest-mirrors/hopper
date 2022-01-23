@@ -1,6 +1,6 @@
 
 -- define global
-hopper = {}
+hopper = {version = "20220123"}
 
 
 -- Intllib
@@ -497,6 +497,28 @@ local transfer = function(src, srcpos, dst, dstpos)
 end
 
 
+local lazy = minetest.settings:get_bool("lazy_container_support")
+
+local function add_container_lazy(meta, where, node_name, inv_names)
+
+	if not meta then return end
+
+	local inv = meta:get_inventory()
+
+	for _, inv_name in pairs(inv_names) do
+
+		if inv:get_size(inv_name) > 0 then
+
+--print("hopper: add_container_lazy ["..#containers.."] "..where.." '"..node_name.."' "..inv_name)
+
+			hopper:add_container({{where, node_name, inv_name}})
+
+			return
+		end
+	end
+end
+
+
 -- hopper workings
 minetest.register_abm({
 
@@ -574,8 +596,6 @@ minetest.register_abm({
 		-- get node at other end of spout
 		local dst_name = minetest.get_node(dst_pos).name
 
-
-
 		-- hopper owner
 		local owner = minetest.get_meta(pos):get_string("owner")
 
@@ -608,19 +628,45 @@ minetest.register_abm({
 			end
 		end
 
-		if owner == "" or owner == minetest.get_meta(src_pos):get_string("owner") then
+		-- get container owner
+		local c_owner = minetest.get_meta(src_pos):get_string("owner") or ""
+
+		-- if protection_bypass or actual owner or container not owned
+		if owner == "" or owner == c_owner or c_owner == "" then
 
 			if src_inv then
+
 				transfer(src_inv, src_pos, "main", pos)
+
 				minetest.get_node_timer(src_pos):start(1)
+
+			elseif src_name ~= "ignore" and lazy then
+
+				local meta = minetest.get_meta(src_pos)
+
+				add_container_lazy(meta, "top", src_name, {"main", "dst", "out"})
 			end
 		end
 
-		if owner == "" or owner == minetest.get_meta(dst_pos):get_string("owner") then
+		c_owner = minetest.get_meta(dst_pos):get_string("owner") or ""
+
+		if owner == "" or owner == c_owner or c_owner == "" then
 
 			if dst_inv then
+
 				transfer("main", pos, dst_inv, dst_pos)
+
 				minetest.get_node_timer(dst_pos):start(1)
+
+			elseif dst_name ~= "ignore" and lazy then
+
+				local meta = minetest.get_meta(dst_pos)
+
+				if to == "side" then
+					add_container_lazy(meta, to, dst_name, {"fuel", "main", "src", "in"})
+				else
+					add_container_lazy(meta, to, dst_name, {"main", "src", "in"})
+				end
 			end
 		end
 	end
