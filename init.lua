@@ -1,6 +1,6 @@
 
 -- define global
-hopper = {version = "20220123"}
+hopper = {version = "20220331"}
 
 
 -- Intllib
@@ -26,14 +26,123 @@ function check_creative(name)
 end
 
 
--- default containers
+-- containers ( { where, node, inventory, run_callbacks })
+-- run_callbacks is false to suppress logging during transfer. (be quiet like pipeworks)
 local containers = {
+	{"top", "hopper:hopper", "main", true},
+	{"bottom", "hopper:hopper", "main", true},
+	{"side", "hopper:hopper", "main", true},
+	{"side", "hopper:hopper_side", "main", true},
 
-	{"top", "hopper:hopper", "main"},
-	{"bottom", "hopper:hopper", "main"},
-	{"side", "hopper:hopper", "main"},
-	{"side", "hopper:hopper_side", "main"},
+	{"void", "hopper:hopper", "main", true},
+	{"void", "hopper:hopper_side", "main", true},
+	{"void", "hopper:hopper_void", "main", true},
+}
 
+-- default behavior for *_metadata_inventory_* callbacks
+-- useful to prevent logging during transfer between nodes
+-- cb_default: { true | false }
+--  true: runs callbacks, except the nodes from the blacklist
+--  false: only performs callbacks for the nodes in the whitelist
+local cb_default = true
+local cb_nodes = {}
+
+if cb_default == false then
+
+	-- a whitelist follows
+	-- *_metadata_inventory_* or timer:start may be necessary to start processing
+	cb_nodes = {
+		-- callbacks without transfer logging
+		"^bones:bones",      -- drop empty bones
+		"^default:furnace",  -- start timer
+		"^wine:wine_barrel", -- start timer
+		--  crazy autocrafter:
+		--   allow_metadata_inventory_* is needed to start processing,
+		--   when 'main' was empty before.
+		--   But don't call get_node_timer(pos):start(1) when disabled.
+		"^pipeworks:autocrafter",
+	--[[ notes
+		-- no prozessing, no transfer logging
+		"^pipeworks:deployer_",
+		"^pipeworks:dispenser_",
+		"^pipeworks:nodebreaker_",
+
+		-- checks upgrade slots, no transfer logging
+		"^technic:[lmh]v_",
+		"^technic:coal_alloy_furnace", -- abm driven
+		"^technic:constructor_mk",
+		"^technic:injector",
+		"^technic:tool_workshop",
+
+		-- fixed: no transfer logging of fake players
+		"^hopper:hopper",
+	--]]
+	}
+
+elseif cb_default == true then
+
+	-- a blacklist follows
+	-- *_metadata_inventory_* or timer:start is not needed to start processing
+	cb_nodes = {
+		-- callbacks opens the formspec
+		"^df_underworld_items:puzzle_seal",
+
+		-- callbacks disabled to prevent logging during transfer between nodes
+		"[:_]chest",
+		"^castle_storage:",
+		"^crafting_bench:workbench",
+		"^darkage:box",
+		"^darkage:wood_shelves",
+		"^homedecor:",
+	--[[ notes
+		-- no prozessing, logs action in on_metadata_inventory_*
+		"^digilines:chest",
+		"^homedecor:nightstand_",
+		"^homedecor:kitchen_cabinet_",
+		"^homedecor:refrigerator_",
+		"^homedecor:cardboard_box",
+		"^homedecor:desk",
+		"^homedecor:filing_cabine",
+		"^homedecor:wardrobe",
+		"^more_chests:",
+		"^nanotech:carbon_chest",
+		"^protector:chest",
+		"^technic:.*_chest",
+
+		-- abm driven, logs action in on_metadata_inventory_*
+		"^homedecor:microwave_oven",
+		"^homedecor:oven",
+	--]]
+	}
+end
+
+
+-- global function to add new containers
+function hopper:add_container(list)
+
+	for n = 1, #list do
+
+		local cols = table.copy(list[n])
+
+		cols[4] = cb_default
+
+		for _, p in pairs(cb_nodes) do
+
+			if string.find(cols[2], p) then
+
+				cols[4] = not cb_nodes
+
+				break
+			end
+		end
+
+		table.insert(containers, cols)
+	end
+end
+
+
+-- default containers
+hopper:add_container({
 	{"top", "default:chest", "main"},
 	{"bottom", "default:chest", "main"},
 	{"side", "default:chest", "main"},
@@ -58,22 +167,11 @@ local containers = {
 	{"bottom", "default:chest_locked_open", "main"},
 	{"side", "default:chest_locked_open", "main"},
 
-	{"void", "hopper:hopper", "main"},
-	{"void", "hopper:hopper_side", "main"},
-	{"void", "hopper:hopper_void", "main"},
 	{"void", "default:chest", "main"},
 	{"void", "default:chest_open", "main"},
 	{"void", "default:furnace", "src"},
 	{"void", "default:furnace_active", "src"}
-}
-
--- global function to add new containers
-function hopper:add_container(list)
-
-	for n = 1, #list do
-		table.insert(containers, list[n])
-	end
-end
+})
 
 
 -- protector redo mod support
@@ -103,7 +201,7 @@ end
 -- formspec
 local function get_hopper_formspec(pos)
 
-	local spos = pos.x .. "," .. pos.y .. "," ..pos.z
+	local spos = pos.x .. "," .. pos.y .. "," .. pos.z
 	local formspec =
 		"size[8,9]"
 		.. default.gui_bg
@@ -116,6 +214,17 @@ local function get_hopper_formspec(pos)
 		.. "listring[current_player;main]"
 
 	return formspec
+end
+
+
+-- only log actions of real players
+local function log_action(player, pos, message)
+
+	if player and not player.is_fake_player and player:is_player() then
+
+		minetest.log("action", player:get_player_name() .. " "
+			.. message .. " at " .. minetest.pos_to_string(pos))
+	end
 end
 
 
@@ -219,20 +328,17 @@ minetest.register_node("hopper:hopper", {
 	on_metadata_inventory_move = function(
 			pos, from_list, from_index, to_list, to_index, count, player)
 
-		minetest.log("action", player:get_player_name()
-			.. " moves stuff in hopper at " .. minetest.pos_to_string(pos))
+		log_action(player, pos, "moves stuff in hopper")
 	end,
 
 	on_metadata_inventory_put = function(pos, listname, index, stack, player)
 
-		minetest.log("action", player:get_player_name()
-			.. " moves stuff to hopper at " .. minetest.pos_to_string(pos))
+		log_action(player, pos,	"moves stuff to hopper")
 	end,
 
 	on_metadata_inventory_take = function(pos, listname, index, stack, player)
 
-		minetest.log("action", player:get_player_name()
-			.. " moves stuff from hopper at " .. minetest.pos_to_string(pos))
+		log_action(player, pos, "moves stuff from hopper")
 	end,
 
 	on_rotate = screwdriver.disallow,
@@ -293,20 +399,17 @@ minetest.register_node("hopper:hopper_side", {
 	on_metadata_inventory_move = function(
 			pos, from_list, from_index, to_list, to_index, count, player)
 
-		minetest.log("action", player:get_player_name()
-			.. " moves stuff in side hopper at " .. minetest.pos_to_string(pos))
+		log_action(player, pos, "moves stuff in side hopper")
 	end,
 
 	on_metadata_inventory_put = function(pos, listname, index, stack, player)
 
-		minetest.log("action", player:get_player_name()
-			.. " moves stuff to side hopper at " .. minetest.pos_to_string(pos))
+		log_action(player, pos, "moves stuff to side hopper")
 	end,
 
 	on_metadata_inventory_take = function(pos, listname, index, stack, player)
 
-		minetest.log("action", player:get_player_name()
-			.. " moves stuff from side hopper at " .. minetest.pos_to_string(pos))
+		log_action(player, pos, "moves stuff from side hopper")
 	end,
 
 	on_rotate = screwdriver.rotate_simple,
@@ -432,20 +535,17 @@ minetest.register_node("hopper:hopper_void", {
 	on_metadata_inventory_move = function(
 			pos, from_list, from_index, to_list, to_index, count, player)
 
-		minetest.log("action", player:get_player_name()
-			.. " moves stuff in void hopper at " .. minetest.pos_to_string(pos))
+		log_action(player, pos, "moves stuff in void hopper")
 	end,
 
 	on_metadata_inventory_put = function(pos, listname, index, stack, player)
 
-		minetest.log("action", player:get_player_name()
-			.." moves stuff into void hopper at " .. minetest.pos_to_string(pos))
+		log_action(player, pos, "moves stuff into void hopper")
 	end,
 
 	on_metadata_inventory_take = function(pos, listname, index, stack, player)
 
-		minetest.log("action", player:get_player_name()
-			.. " moves stuff from void hopper at " .. minetest.pos_to_string(pos))
+		log_action(player, pos, "moves stuff from void hopper")
 	end,
 
 	on_rotate = screwdriver.disallow,
@@ -454,7 +554,7 @@ minetest.register_node("hopper:hopper_void", {
 
 
 -- transfer function
-local transfer = function(src, srcpos, dst, dstpos)
+local transfer = function(src, srcpos, dst, dstpos, allowed, finished)
 
 	-- source inventory
 	local inv = minetest.get_meta(srcpos):get_inventory()
@@ -474,21 +574,19 @@ local transfer = function(src, srcpos, dst, dstpos)
 
 		stack = inv:get_stack(src, i)
 		item = stack:get_name()
-		max = stack:get_stack_max()
 
 		-- if slot not empty and room for item in destination
 		if item ~= ""
 		and inv2:room_for_item(dst, item) then
 
-			-- stack max of 1 is usually for tools or items with metadata
-			if max == 1 then
-				inv2:add_item(dst, stack)
-				inv:set_stack(src, i, nil)
+			local take = stack:take_item(1)
 
-			else -- everything else that can be stacked
-				stack:take_item(1)
-				inv2:add_item(dst, item)
+			if allowed(i, take) then
+
+				inv2:add_item(dst, take)
 				inv:set_stack(src, i, stack)
+
+				finished(i, take)
 			end
 
 			return
@@ -509,9 +607,9 @@ local function add_container_lazy(meta, where, node_name, inv_names)
 
 		if inv:get_size(inv_name) > 0 then
 
---print("hopper: add_container_lazy ["..#containers.."] "..where.." '"..node_name.."' "..inv_name)
-
 			hopper:add_container({{where, node_name, inv_name}})
+
+--print("hopper: add_container_lazy ["..#containers.."] "..where.." '"..node_name.."' "..inv_name .. " " .. (containers[#containers][4] and "true" or "false"))
 
 			return
 		end
@@ -599,6 +697,14 @@ minetest.register_abm({
 		-- hopper owner
 		local owner = minetest.get_meta(pos):get_string("owner")
 
+		-- the hopper itself interacts as fake player
+		local player = {
+			is_player = function() return false end,
+			get_player_name = function() return owner end,
+			is_fake_player = ":hopper",
+			get_wielded_item = function() return ItemStack(nil) end
+		}
+
 		if minetest.check_player_privs(owner, "protection_bypass") then
 			owner = ""
 		end
@@ -612,7 +718,7 @@ minetest.register_abm({
 			to = "void"
 		end
 
-		local where, name, inv, def, src_inv, dst_inv
+		local where, name, inv, run_cb, src_inv, dst_inv, src_cb, dst_cb
 
 		-- do for loop here for api check
 		for n = 1, #containers do
@@ -620,11 +726,14 @@ minetest.register_abm({
 			where = containers[n][1]
 			name = containers[n][2]
 			inv = containers[n][3]
+			run_cb = containers[n][4]
 
 			if where == "top" and src_name == name then
 				src_inv = inv -- from hopper into destionation container
+				src_cb = run_cb
 			elseif where == to and dst_name == name then
 				dst_inv = inv
+				dst_cb = run_cb
 			end
 		end
 
@@ -636,11 +745,28 @@ minetest.register_abm({
 
 			if src_inv then
 
-				transfer(src_inv, src_pos, "main", pos)
+				-- run callbacks from source node or not
+				local src_def = src_cb and minetest.registered_nodes[src_name]
+				local allowed = function(i, stack)
 
-				minetest.get_node_timer(src_pos):start(1)
+					return not src_def
+					or not src_def.allow_metadata_inventory_take
+					or src_def.allow_metadata_inventory_take(src_pos, src_inv, i,
+							stack, player) > 0
+				end
 
-			elseif src_name ~= "ignore" and lazy then
+				local finished = function(i, stack)
+
+					return not src_def
+					or not src_def.on_metadata_inventory_take
+					or src_def.on_metadata_inventory_take(src_pos, src_inv, i, stack,
+							player)
+				end
+
+				transfer(src_inv, src_pos, "main", pos, allowed, finished)
+
+			elseif src_name ~= "ignore"
+			and lazy and not string.find(src_name, "^hopper:") then
 
 				local meta = minetest.get_meta(src_pos)
 
@@ -654,11 +780,28 @@ minetest.register_abm({
 
 			if dst_inv then
 
-				transfer("main", pos, dst_inv, dst_pos)
+				-- run callbacks from destionation node or not
+				local dst_def = dst_cb and minetest.registered_nodes[dst_name]
+				local allowed = function(i, stack)
 
-				minetest.get_node_timer(dst_pos):start(1)
+					return not dst_def
+					or not dst_def.allow_metadata_inventory_put
+					or dst_def.allow_metadata_inventory_put(dst_pos, dst_inv, i, stack,
+							player) > 0
+				end
 
-			elseif dst_name ~= "ignore" and lazy then
+				local finished = function(i, stack)
+
+					return not dst_def
+					or not dst_def.on_metadata_inventory_put
+					or dst_def.on_metadata_inventory_put(dst_pos, dst_inv, i, stack,
+							player)
+				end
+
+				transfer("main", pos, dst_inv, dst_pos, allowed, finished)
+
+			elseif dst_name ~= "ignore" and lazy
+			and not string.find(dst_name, "^hopper:") then
 
 				local meta = minetest.get_meta(dst_pos)
 
