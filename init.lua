@@ -1,6 +1,6 @@
 
 -- define global
-hopper = {version = "20220331"}
+hopper = {version = "20230501"}
 
 
 -- Intllib
@@ -248,6 +248,17 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 		return itemstack
 	end
 
+	if pointed_thing.type == "node"
+	and placer and not placer:get_player_control().sneak then
+
+		local nn = minetest.get_node(pointed_thing.under).name
+
+		if minetest.registered_nodes[nn]
+		and minetest.registered_nodes[nn].on_rightclick then
+			return minetest.item_place(itemstack, placer, pointed_thing)
+		end
+	end
+
 	if x == -1 then
 		minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 0})
 
@@ -477,6 +488,17 @@ minetest.register_node("hopper:hopper_void", {
 
 		local pos = pointed_thing.above
 		local name = placer:get_player_name() or ""
+
+		if pointed_thing.type == "node"
+		and placer and not placer:get_player_control().sneak then
+
+			local nn = minetest.get_node(pointed_thing.under).name
+
+			if minetest.registered_nodes[nn]
+			and minetest.registered_nodes[nn].on_rightclick then
+				return minetest.item_place(itemstack, placer, pointed_thing)
+			end
+		end
 
 		if not player_void[name] then
 			minetest.chat_send_player(name, S("No container position set!"))
