@@ -8,8 +8,6 @@ local S
 
 if minetest.get_translator then
 	S = minetest.get_translator("hopper")
-elseif minetest.get_modpath("intllib") then
-	S = intllib.Getter()
 else
 	S = function(s, a, ...) a = {a, ...}
 		return s:gsub("@(%d+)", function(n)
@@ -21,7 +19,7 @@ end
 
 -- creative check
 local creative_mode_cache = minetest.settings:get_bool("creative_mode")
-function check_creative(name)
+local function check_creative(name)
 	return creative_mode_cache or minetest.check_player_privs(name, {creative = true})
 end
 
