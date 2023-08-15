@@ -11,6 +11,8 @@ local function check_creative(name)
 	return creative_mode_cache or minetest.check_player_privs(name, {creative = true})
 end
 
+-- screwdriver mod
+local mod_screwdriver = minetest.get_modpath("screwdriver")
 
 -- containers ( { where, node, inventory, run_callbacks })
 -- run_callbacks is false to suppress logging during transfer. (be quiet like pipeworks)
@@ -338,7 +340,7 @@ minetest.register_node("hopper:hopper", {
 		log_action(player, pos, "moves stuff from hopper")
 	end,
 
-	on_rotate = screwdriver.disallow,
+	on_rotate = mod_screwdriver and screwdriver.disallow,
 	on_blast = function() end
 })
 
@@ -409,7 +411,7 @@ minetest.register_node("hopper:hopper_side", {
 		log_action(player, pos, "moves stuff from side hopper")
 	end,
 
-	on_rotate = screwdriver.rotate_simple,
+	on_rotate = mod_screwdriver and screwdriver.rotate_simple,
 	on_blast = function() end
 })
 
@@ -556,7 +558,7 @@ minetest.register_node("hopper:hopper_void", {
 		log_action(player, pos, "moves stuff from void hopper")
 	end,
 
-	on_rotate = screwdriver.disallow,
+	on_rotate = mod_screwdriver and screwdriver.disallow,
 	on_blast = function() end
 })
 
