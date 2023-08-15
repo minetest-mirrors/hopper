@@ -1,21 +1,9 @@
 
 -- define global
-hopper = {version = "20230501"}
+hopper = {version = "20230815"}
 
-
--- Intllib
-local S
-
-if minetest.get_translator then
-	S = minetest.get_translator("hopper")
-else
-	S = function(s, a, ...) a = {a, ...}
-		return s:gsub("@(%d+)", function(n)
-			return a[tonumber(n)]
-		end)
-	end
-
-end
+-- Translation support
+local S = minetest.get_translator("hopper")
 
 -- creative check
 local creative_mode_cache = minetest.settings:get_bool("creative_mode")
@@ -473,8 +461,8 @@ minetest.register_node("hopper:hopper_void", {
 		end
 
 		if ok then
-			minetest.chat_send_player(name, S("Output container set"
-				.. " " .. minetest.pos_to_string(pos)))
+			minetest.chat_send_player(name, S("Output container set")
+				.. " " .. minetest.pos_to_string(pos))
 			player_void[name] = pos
 		else
 			minetest.chat_send_player(name, S("Not a registered container!"))
