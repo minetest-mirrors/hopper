@@ -1,21 +1,24 @@
 
--- define global
-hopper = {version = "20230815"}
+-- global
 
--- Translation support
+hopper = {version = "20240816"}
+
+-- Translation and mod check
+
 local S = minetest.get_translator("hopper")
+local mod_screwdriver = minetest.get_modpath("screwdriver")
 
 -- creative check
+
 local creative_mode_cache = minetest.settings:get_bool("creative_mode")
+
 local function check_creative(name)
 	return creative_mode_cache or minetest.check_player_privs(name, {creative = true})
 end
 
--- screwdriver mod
-local mod_screwdriver = minetest.get_modpath("screwdriver")
-
 -- containers ( { where, node, inventory, run_callbacks })
 -- run_callbacks is false to suppress logging during transfer. (be quiet like pipeworks)
+
 local containers = {
 	{"top", "hopper:hopper", "main", true},
 	{"bottom", "hopper:hopper", "main", true},
@@ -104,8 +107,8 @@ elseif cb_default == true then
 	}
 end
 
-
 -- global function to add new containers
+
 function hopper:add_container(list)
 
 	for n = 1, #list do
@@ -128,8 +131,8 @@ function hopper:add_container(list)
 	end
 end
 
-
 -- default containers
+
 hopper:add_container({
 	{"top", "default:chest", "main"},
 	{"bottom", "default:chest", "main"},
@@ -161,8 +164,8 @@ hopper:add_container({
 	{"void", "default:furnace_active", "src"}
 })
 
-
 -- protector redo mod support
+
 if minetest.get_modpath("protector") then
 
 	hopper:add_container({
@@ -173,8 +176,8 @@ if minetest.get_modpath("protector") then
 	})
 end
 
-
 -- wine mod support
+
 if minetest.get_modpath("wine") then
 
 	hopper:add_container({
@@ -185,8 +188,8 @@ if minetest.get_modpath("wine") then
 	})
 end
 
-
 -- formspec
+
 local function get_hopper_formspec(pos)
 
 	local spos = pos.x .. "," .. pos.y .. "," .. pos.z
@@ -204,8 +207,8 @@ local function get_hopper_formspec(pos)
 	return formspec
 end
 
-
 -- only log actions of real players
+
 local function log_action(player, pos, message)
 
 	if player and not player.is_fake_player and player:is_player() then
@@ -215,8 +218,8 @@ local function log_action(player, pos, message)
 	end
 end
 
-
 -- check where pointing and set normal or side-hopper
+
 local hopper_place = function(itemstack, placer, pointed_thing)
 
 	local pos = pointed_thing.above
@@ -232,9 +235,8 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 	-- make sure we aren't replacing something we shouldnt
 	local node = minetest.get_node_or_nil(pos)
 	local def = node and minetest.registered_nodes[node.name]
-	if def and not def.buildable_to then
-		return itemstack
-	end
+
+	if def and not def.buildable_to then return itemstack end
 
 	if pointed_thing.type == "node"
 	and placer and not placer:get_player_control().sneak then
@@ -267,7 +269,7 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 		itemstack:take_item()
 	end
 
-	-- set metadata
+	-- get and set metadata
 	local meta = minetest.get_meta(pos)
 	local inv = meta:get_inventory()
 
@@ -278,8 +280,8 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 	return itemstack
 end
 
+-- hopper node
 
--- hopper
 minetest.register_node("hopper:hopper", {
 	description = S("Hopper (Place onto sides for side-hopper)"),
 	groups = {cracky = 3},
@@ -344,8 +346,8 @@ minetest.register_node("hopper:hopper", {
 	on_blast = function() end
 })
 
+-- side hopper node
 
--- side hopper
 minetest.register_node("hopper:hopper_side", {
 	description = S("Side Hopper (Place into crafting to return normal Hopper)"),
 	groups = {cracky = 3, not_in_creative_inventory = 1},
@@ -415,10 +417,10 @@ minetest.register_node("hopper:hopper_side", {
 	on_blast = function() end
 })
 
+-- void hopper node
 
 local player_void = {}
 
--- void hopper
 minetest.register_node("hopper:hopper_void", {
 	description = S("Void Hopper (Use first to set destination container)"),
 	groups = {cracky = 3},
@@ -442,9 +444,7 @@ minetest.register_node("hopper:hopper_void", {
 
 	on_use = function(itemstack, player, pointed_thing)
 
-		if pointed_thing.type ~= "node" then
-			return
-		end
+		if pointed_thing.type ~= "node" then return end
 
 		local pos = pointed_thing.under
 		local name = player:get_player_name()
@@ -562,8 +562,8 @@ minetest.register_node("hopper:hopper_void", {
 	on_blast = function() end
 })
 
-
 -- transfer function
+
 local transfer = function(src, srcpos, dst, dstpos, allowed, finished)
 
 	-- source inventory
@@ -573,9 +573,7 @@ local transfer = function(src, srcpos, dst, dstpos, allowed, finished)
 	local inv2 = minetest.get_meta(dstpos):get_inventory()
 
 	-- check for empty source or no inventory
-	if not inv or not inv2 or inv:is_empty(src) == true then
-		return
-	end
+	if not inv or not inv2 or inv:is_empty(src) == true then return end
 
 	local stack, item, max
 
@@ -586,8 +584,7 @@ local transfer = function(src, srcpos, dst, dstpos, allowed, finished)
 		item = stack:get_name()
 
 		-- if slot not empty and room for item in destination
-		if item ~= ""
-		and inv2:room_for_item(dst, item) then
+		if item ~= "" and inv2:room_for_item(dst, item) then
 
 			local take = stack:take_item(1)
 
@@ -604,6 +601,7 @@ local transfer = function(src, srcpos, dst, dstpos, allowed, finished)
 	end
 end
 
+-- lazy container setting and function
 
 local lazy = minetest.settings:get_bool("lazy_container_support")
 
@@ -626,8 +624,8 @@ local function add_container_lazy(meta, where, node_name, inv_names)
 	end
 end
 
-
 -- hopper workings
+
 minetest.register_abm({
 
 	label = "Hopper suction and transfer",
@@ -643,16 +641,13 @@ minetest.register_abm({
 		for _,object in pairs(minetest.get_objects_inside_radius(pos, 1)) do
 
 			if not object:is_player()
-			and object:get_luaentity()
-			and object:get_luaentity().name == "__builtin:item"
-			and inv
-			and inv:room_for_item("main",
-				ItemStack(object:get_luaentity().itemstring)) then
+			and object:get_luaentity() and object:get_luaentity().name == "__builtin:item"
+			and inv and inv:room_for_item("main",
+					ItemStack(object:get_luaentity().itemstring)) then
 
 				if object:get_pos().y - pos.y > 0.25 then
 
-					inv:add_item("main",
-						ItemStack(object:get_luaentity().itemstring))
+					inv:add_item("main", ItemStack(object:get_luaentity().itemstring))
 
 					object:get_luaentity().itemstring = ""
 					object:remove()
@@ -667,17 +662,13 @@ minetest.register_abm({
 
 			local face = node.param2
 
-			if face == 0 then
-				dst_pos = {x = pos.x - 1, y = pos.y, z = pos.z}
+			if face == 0 then dst_pos = {x = pos.x - 1, y = pos.y, z = pos.z}
 
-			elseif face == 1 then
-				dst_pos = {x = pos.x, y = pos.y, z = pos.z + 1}
+			elseif face == 1 then dst_pos = {x = pos.x, y = pos.y, z = pos.z + 1}
 
-			elseif face == 2 then
-				dst_pos = {x = pos.x + 1, y = pos.y, z = pos.z}
+			elseif face == 2 then dst_pos = {x = pos.x + 1, y = pos.y, z = pos.z}
 
-			elseif face == 3 then
-				dst_pos = {x = pos.x, y = pos.y, z = pos.z - 1}
+			elseif face == 3 then dst_pos = {x = pos.x, y = pos.y, z = pos.z - 1}
 			else
 				return
 			end
@@ -720,13 +711,9 @@ minetest.register_abm({
 		end
 
 		local to
-		if node.name == "hopper:hopper" then
-			to = "bottom"
-		elseif node.name == "hopper:hopper_side" then
-			to = "side"
-		elseif node.name == "hopper:hopper_void" then
-			to = "void"
-		end
+		if node.name == "hopper:hopper" then to = "bottom"
+		elseif node.name == "hopper:hopper_side" then to = "side"
+		elseif node.name == "hopper:hopper_void" then to = "void" end
 
 		local where, name, inv, run_cb, src_inv, dst_inv, src_cb, dst_cb
 
@@ -825,8 +812,8 @@ minetest.register_abm({
 	end
 })
 
-
 -- hopper recipe
+
 minetest.register_craft({
 	output = "hopper:hopper",
 	recipe = {
@@ -836,13 +823,16 @@ minetest.register_craft({
 })
 
 -- side hopper to hopper recipe
+
 minetest.register_craft({
 	output = "hopper:hopper",
 	recipe = {{"hopper:hopper_side"}}
 })
 
 -- void hopper recipe
+
 if minetest.get_modpath("teleport_potion") then
+
 	minetest.register_craft({
 		output = "hopper:hopper_void",
 		recipe = {
@@ -862,6 +852,7 @@ end
 
 
 -- add lucky blocks
+
 if minetest.get_modpath("lucky_block") then
 
 	lucky_block:add_blocks({
