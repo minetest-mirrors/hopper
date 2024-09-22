@@ -21,4 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Textures by Napiophelios under Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
+32px Textures by Napiophelios under Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
+
+16px Textures by SmallJoker/Krock (CC0)

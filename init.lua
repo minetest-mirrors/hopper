@@ -1,7 +1,7 @@
 
 -- global
 
-hopper = {version = "20240816"}
+hopper = {version = "20240922"}
 
 -- Translation and mod check
 
@@ -193,8 +193,7 @@ end
 local function get_hopper_formspec(pos)
 
 	local spos = pos.x .. "," .. pos.y .. "," .. pos.z
-	local formspec =
-		"size[8,9]"
+	local formspec = "size[8,9]"
 		.. default.gui_bg
 		.. default.gui_bg_img
 		.. default.gui_slots
@@ -289,7 +288,6 @@ minetest.register_node("hopper:hopper", {
 	paramtype = "light",
 	use_texture_alpha = "clip",
 	tiles = {"hopper_top.png", "hopper_top.png", "hopper_front.png"},
-	inventory_image = "hopper_inv.png",
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -323,7 +321,7 @@ minetest.register_node("hopper:hopper", {
 		end
 
 		minetest.show_formspec(clicker:get_player_name(),
-			"hopper:hopper", get_hopper_formspec(pos))
+				"hopper:hopper", get_hopper_formspec(pos))
 	end,
 
 	on_metadata_inventory_move = function(
@@ -356,10 +354,9 @@ minetest.register_node("hopper:hopper_side", {
 	use_texture_alpha = "clip",
 	paramtype2 = "facedir",
 	tiles = {
-		"hopper_top.png", "hopper_top.png", "hopper_back.png",
+		"hopper_top.png", "hopper_bottom.png", "hopper_back.png",
 		"hopper_side.png", "hopper_back.png", "hopper_back.png"
 	},
-	inventory_image = "hopper_side_inv.png",
 	drop = "hopper:hopper",
 	node_box = {
 		type = "fixed",
@@ -394,7 +391,7 @@ minetest.register_node("hopper:hopper_side", {
 		end
 
 		minetest.show_formspec(clicker:get_player_name(),
-			"hopper:hopper_side", get_hopper_formspec(pos))
+				"hopper:hopper_side", get_hopper_formspec(pos))
 	end,
 
 	on_metadata_inventory_move = function(
@@ -427,8 +424,10 @@ minetest.register_node("hopper:hopper_void", {
 	drawtype = "nodebox",
 	paramtype = "light",
 	use_texture_alpha = "clip",
-	tiles = {"hopper_top.png", "hopper_top.png", "hopper_front.png"},
-	inventory_image = "default_obsidian.png^hopper_inv.png",
+	tiles = {
+		"hopper_top.png", "hopper_bottom.png", "hopper_back.png",
+		"hopper_back.png", "hopper_back.png", "hopper_back.png"
+	},
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -518,8 +517,8 @@ minetest.register_node("hopper:hopper_void", {
 
 		meta:set_string("owner", name)
 		meta:set_string("void", minetest.pos_to_string(player_void[name]))
-		meta:set_string("infotext", "Void Hopper\nConnected to " ..
-				minetest.pos_to_string(player_void[name]))
+		meta:set_string("infotext", S("Void Hopper\nConnected to @1",
+				minetest.pos_to_string(player_void[name])))
 
 		return itemstack
 	end,
@@ -539,7 +538,7 @@ minetest.register_node("hopper:hopper_void", {
 		end
 
 		minetest.show_formspec(clicker:get_player_name(),
-			"hopper:hopper", get_hopper_formspec(pos))
+				"hopper:hopper", get_hopper_formspec(pos))
 	end,
 
 	on_metadata_inventory_move = function(
