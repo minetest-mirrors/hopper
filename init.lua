@@ -1,19 +1,19 @@
 
 -- global
 
-hopper = {version = "20240922"}
+hopper = {version = "20250504"}
 
 -- Translation and mod check
 
-local S = minetest.get_translator("hopper")
-local mod_screwdriver = minetest.get_modpath("screwdriver")
+local S = core.get_translator("hopper")
+local mod_screwdriver = core.get_modpath("screwdriver")
 
 -- creative check
 
-local creative_mode_cache = minetest.settings:get_bool("creative_mode")
+local creative_mode_cache = core.settings:get_bool("creative_mode")
 
 local function check_creative(name)
-	return creative_mode_cache or minetest.check_player_privs(name, {creative = true})
+	return creative_mode_cache or core.check_player_privs(name, {creative = true})
 end
 
 -- containers ( { where, node, inventory, run_callbacks })
@@ -166,7 +166,7 @@ hopper:add_container({
 
 -- protector redo mod support
 
-if minetest.get_modpath("protector") then
+if core.get_modpath("protector") then
 
 	hopper:add_container({
 		{"top", "protector:chest", "main"},
@@ -178,7 +178,7 @@ end
 
 -- wine mod support
 
-if minetest.get_modpath("wine") then
+if core.get_modpath("wine") then
 
 	hopper:add_container({
 		{"top", "wine:wine_barrel", "dst"},
@@ -212,8 +212,8 @@ local function log_action(player, pos, message)
 
 	if player and not player.is_fake_player and player:is_player() then
 
-		minetest.log("action", player:get_player_name() .. " "
-			.. message .. " at " .. minetest.pos_to_string(pos))
+		core.log("action", player:get_player_name() .. " "
+			.. message .. " at " .. core.pos_to_string(pos))
 	end
 end
 
@@ -226,42 +226,42 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 	local z = pointed_thing.under.z - pos.z
 	local name = placer:get_player_name() or ""
 
-	if minetest.is_protected(pos, name) then
-		minetest.record_protection_violation(pos, name)
+	if core.is_protected(pos, name) then
+		core.record_protection_violation(pos, name)
 		return itemstack
 	end
 
 	-- make sure we aren't replacing something we shouldnt
-	local node = minetest.get_node_or_nil(pos)
-	local def = node and minetest.registered_nodes[node.name]
+	local node = core.get_node_or_nil(pos)
+	local def = node and core.registered_nodes[node.name]
 
 	if def and not def.buildable_to then return itemstack end
 
 	if pointed_thing.type == "node"
 	and placer and not placer:get_player_control().sneak then
 
-		local nn = minetest.get_node(pointed_thing.under).name
+		local nn = core.get_node(pointed_thing.under).name
 
-		if minetest.registered_nodes[nn]
-		and minetest.registered_nodes[nn].on_rightclick then
-			return minetest.item_place(itemstack, placer, pointed_thing)
+		if core.registered_nodes[nn]
+		and core.registered_nodes[nn].on_rightclick then
+			return core.item_place(itemstack, placer, pointed_thing)
 		end
 	end
 
 	if x == -1 then
-		minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 0})
+		core.set_node(pos, {name = "hopper:hopper_side", param2 = 0})
 
 	elseif x == 1 then
-		minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 2})
+		core.set_node(pos, {name = "hopper:hopper_side", param2 = 2})
 
 	elseif z == -1 then
-		minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 3})
+		core.set_node(pos, {name = "hopper:hopper_side", param2 = 3})
 
 	elseif z == 1 then
-		minetest.set_node(pos, {name = "hopper:hopper_side", param2 = 1})
+		core.set_node(pos, {name = "hopper:hopper_side", param2 = 1})
 
 	else
-		minetest.set_node(pos, {name = "hopper:hopper"})
+		core.set_node(pos, {name = "hopper:hopper"})
 	end
 
 	if not check_creative(placer:get_player_name()) then
@@ -269,7 +269,7 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 	end
 
 	-- get and set metadata
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local inv = meta:get_inventory()
 
 	inv:set_size("main", 4*4)
@@ -281,7 +281,7 @@ end
 
 -- hopper node
 
-minetest.register_node("hopper:hopper", {
+core.register_node("hopper:hopper", {
 	description = S("Hopper (Place onto sides for side-hopper)"),
 	groups = {cracky = 3},
 	drawtype = "nodebox",
@@ -308,19 +308,19 @@ minetest.register_node("hopper:hopper", {
 
 	can_dig = function(pos, player)
 
-		local inv = minetest.get_meta(pos):get_inventory()
+		local inv = core.get_meta(pos):get_inventory()
 
 		return inv:is_empty("main")
 	end,
 
 	on_rightclick = function(pos, node, clicker, itemstack)
 
-		if not minetest.get_meta(pos)
-		or minetest.is_protected(pos, clicker:get_player_name()) then
+		if not core.get_meta(pos)
+		or core.is_protected(pos, clicker:get_player_name()) then
 			return itemstack
 		end
 
-		minetest.show_formspec(clicker:get_player_name(),
+		core.show_formspec(clicker:get_player_name(),
 				"hopper:hopper", get_hopper_formspec(pos))
 	end,
 
@@ -346,7 +346,7 @@ minetest.register_node("hopper:hopper", {
 
 -- side hopper node
 
-minetest.register_node("hopper:hopper_side", {
+core.register_node("hopper:hopper_side", {
 	description = S("Side Hopper (Place into crafting to return normal Hopper)"),
 	groups = {cracky = 3, not_in_creative_inventory = 1},
 	drawtype = "nodebox",
@@ -378,19 +378,19 @@ minetest.register_node("hopper:hopper_side", {
 
 	can_dig = function(pos, player)
 
-		local inv = minetest.get_meta(pos):get_inventory()
+		local inv = core.get_meta(pos):get_inventory()
 
 		return inv:is_empty("main")
 	end,
 
 	on_rightclick = function(pos, node, clicker, itemstack)
 
-		if not minetest.get_meta(pos)
-		or minetest.is_protected(pos, clicker:get_player_name()) then
+		if not core.get_meta(pos)
+		or core.is_protected(pos, clicker:get_player_name()) then
 			return itemstack
 		end
 
-		minetest.show_formspec(clicker:get_player_name(),
+		core.show_formspec(clicker:get_player_name(),
 				"hopper:hopper_side", get_hopper_formspec(pos))
 	end,
 
@@ -418,7 +418,7 @@ minetest.register_node("hopper:hopper_side", {
 
 local player_void = {}
 
-minetest.register_node("hopper:hopper_void", {
+core.register_node("hopper:hopper_void", {
 	description = S("Void Hopper (Use first to set destination container)"),
 	groups = {cracky = 3},
 	drawtype = "nodebox",
@@ -447,11 +447,11 @@ minetest.register_node("hopper:hopper_void", {
 
 		local pos = pointed_thing.under
 		local name = player:get_player_name()
-		local node = minetest.get_node(pos).name
+		local node = core.get_node(pos).name
 		local ok
 
-		if minetest.is_protected(pos, name) then
-			minetest.record_protection_violation(pos, name)
+		if core.is_protected(pos, name) then
+			core.record_protection_violation(pos, name)
 			return itemstack
 		end
 
@@ -462,11 +462,11 @@ minetest.register_node("hopper:hopper_void", {
 		end
 
 		if ok then
-			minetest.chat_send_player(name, S("Output container set")
-				.. " " .. minetest.pos_to_string(pos))
+			core.chat_send_player(name, S("Output container set")
+				.. " " .. core.pos_to_string(pos))
 			player_void[name] = pos
 		else
-			minetest.chat_send_player(name, S("Not a registered container!"))
+			core.chat_send_player(name, S("Not a registered container!"))
 			player_void[name] = nil
 		end
 	end,
@@ -479,27 +479,27 @@ minetest.register_node("hopper:hopper_void", {
 		if pointed_thing.type == "node"
 		and placer and not placer:get_player_control().sneak then
 
-			local nn = minetest.get_node(pointed_thing.under).name
+			local nn = core.get_node(pointed_thing.under).name
 
-			if minetest.registered_nodes[nn]
-			and minetest.registered_nodes[nn].on_rightclick then
-				return minetest.item_place(itemstack, placer, pointed_thing)
+			if core.registered_nodes[nn]
+			and core.registered_nodes[nn].on_rightclick then
+				return core.item_place(itemstack, placer, pointed_thing)
 			end
 		end
 
 		if not player_void[name] then
-			minetest.chat_send_player(name, S("No container position set!"))
+			core.chat_send_player(name, S("No container position set!"))
 			return itemstack
 		end
 
-		if minetest.is_protected(pos, name) then
-			minetest.record_protection_violation(pos, name)
+		if core.is_protected(pos, name) then
+			core.record_protection_violation(pos, name)
 			return itemstack
 		end
 
 		-- make sure we aren't replacing something we shouldnt
-		local node = minetest.get_node_or_nil(pos)
-		local def = node and minetest.registered_nodes[node.name]
+		local node = core.get_node_or_nil(pos)
+		local def = node and core.registered_nodes[node.name]
 		if def and not def.buildable_to then
 			return itemstack
 		end
@@ -508,36 +508,36 @@ minetest.register_node("hopper:hopper_void", {
 			itemstack:take_item()
 		end
 
-		minetest.set_node(pos, {name = "hopper:hopper_void", param2 = 0})
+		core.set_node(pos, {name = "hopper:hopper_void", param2 = 0})
 
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		local inv = meta:get_inventory()
 
 		inv:set_size("main", 4*4)
 
 		meta:set_string("owner", name)
-		meta:set_string("void", minetest.pos_to_string(player_void[name]))
+		meta:set_string("void", core.pos_to_string(player_void[name]))
 		meta:set_string("infotext", S("Void Hopper\nConnected to @1",
-				minetest.pos_to_string(player_void[name])))
+				core.pos_to_string(player_void[name])))
 
 		return itemstack
 	end,
 
 	can_dig = function(pos, player)
 
-		local inv = minetest.get_meta(pos):get_inventory()
+		local inv = core.get_meta(pos):get_inventory()
 
 		return inv:is_empty("main")
 	end,
 
 	on_rightclick = function(pos, node, clicker, itemstack)
 
-		if not minetest.get_meta(pos)
-		or minetest.is_protected(pos, clicker:get_player_name()) then
+		if not core.get_meta(pos)
+		or core.is_protected(pos, clicker:get_player_name()) then
 			return itemstack
 		end
 
-		minetest.show_formspec(clicker:get_player_name(),
+		core.show_formspec(clicker:get_player_name(),
 				"hopper:hopper", get_hopper_formspec(pos))
 	end,
 
@@ -566,10 +566,10 @@ minetest.register_node("hopper:hopper_void", {
 local transfer = function(src, srcpos, dst, dstpos, allowed, finished)
 
 	-- source inventory
-	local inv = minetest.get_meta(srcpos):get_inventory()
+	local inv = core.get_meta(srcpos):get_inventory()
 
 	-- destination inventory
-	local inv2 = minetest.get_meta(dstpos):get_inventory()
+	local inv2 = core.get_meta(dstpos):get_inventory()
 
 	-- check for empty source or no inventory
 	if not inv or not inv2 or inv:is_empty(src) == true then return end
@@ -602,7 +602,7 @@ end
 
 -- lazy container setting and function
 
-local lazy = minetest.settings:get_bool("lazy_container_support")
+local lazy = core.settings:get_bool("lazy_container_support")
 
 local function add_container_lazy(meta, where, node_name, inv_names)
 
@@ -625,7 +625,7 @@ end
 
 -- hopper workings
 
-minetest.register_abm({
+core.register_abm({
 
 	label = "Hopper suction and transfer",
 	nodenames = {"hopper:hopper", "hopper:hopper_side", "hopper:hopper_void"},
@@ -635,9 +635,9 @@ minetest.register_abm({
 
 	action = function(pos, node, active_object_count, active_object_count_wider)
 
-		local inv = minetest.get_meta(pos):get_inventory()
+		local inv = core.get_meta(pos):get_inventory()
 
-		for _,object in pairs(minetest.get_objects_inside_radius(pos, 1)) do
+		for _,object in pairs(core.get_objects_inside_radius(pos, 1)) do
 
 			if not object:is_player()
 			and object:get_luaentity() and object:get_luaentity().name == "__builtin:item"
@@ -674,11 +674,11 @@ minetest.register_abm({
 
 		elseif node.name == "hopper:hopper_void" then
 
-			local meta = minetest.get_meta(pos)
+			local meta = core.get_meta(pos)
 
 			if not meta then return end
 
-			dst_pos = minetest.string_to_pos(meta:get_string("void"))
+			dst_pos = core.string_to_pos(meta:get_string("void"))
 
 		elseif node.name == "hopper:hopper" then
 			-- otherwise normal hopper, output downwards
@@ -689,13 +689,13 @@ minetest.register_abm({
 
 		-- get node above hopper
 		local src_pos = {x = pos.x, y = pos.y + 1, z = pos.z}
-		local src_name = minetest.get_node(src_pos).name
+		local src_name = core.get_node(src_pos).name
 
 		-- get node at other end of spout
-		local dst_name = minetest.get_node(dst_pos).name
+		local dst_name = core.get_node(dst_pos).name
 
 		-- hopper owner
-		local owner = minetest.get_meta(pos):get_string("owner")
+		local owner = core.get_meta(pos):get_string("owner")
 
 		-- the hopper itself interacts as fake player
 		local player = {
@@ -705,7 +705,7 @@ minetest.register_abm({
 			get_wielded_item = function() return ItemStack(nil) end
 		}
 
-		if minetest.check_player_privs(owner, "protection_bypass") then
+		if core.check_player_privs(owner, "protection_bypass") then
 			owner = ""
 		end
 
@@ -734,7 +734,7 @@ minetest.register_abm({
 		end
 
 		-- get container owner
-		local c_owner = minetest.get_meta(src_pos):get_string("owner") or ""
+		local c_owner = core.get_meta(src_pos):get_string("owner") or ""
 
 		-- if protection_bypass or actual owner or container not owned
 		if owner == "" or owner == c_owner or c_owner == "" then
@@ -742,7 +742,7 @@ minetest.register_abm({
 			if src_inv then
 
 				-- run callbacks from source node or not
-				local src_def = src_cb and minetest.registered_nodes[src_name]
+				local src_def = src_cb and core.registered_nodes[src_name]
 				local allowed = function(i, stack)
 
 					return not src_def
@@ -764,20 +764,20 @@ minetest.register_abm({
 			elseif src_name ~= "ignore"
 			and lazy and not string.find(src_name, "^hopper:") then
 
-				local meta = minetest.get_meta(src_pos)
+				local meta = core.get_meta(src_pos)
 
 				add_container_lazy(meta, "top", src_name, {"main", "dst", "out"})
 			end
 		end
 
-		c_owner = minetest.get_meta(dst_pos):get_string("owner") or ""
+		c_owner = core.get_meta(dst_pos):get_string("owner") or ""
 
 		if owner == "" or owner == c_owner or c_owner == "" then
 
 			if dst_inv then
 
 				-- run callbacks from destionation node or not
-				local dst_def = dst_cb and minetest.registered_nodes[dst_name]
+				local dst_def = dst_cb and core.registered_nodes[dst_name]
 				local allowed = function(i, stack)
 
 					return not dst_def
@@ -799,7 +799,7 @@ minetest.register_abm({
 			elseif dst_name ~= "ignore" and lazy
 			and not string.find(dst_name, "^hopper:") then
 
-				local meta = minetest.get_meta(dst_pos)
+				local meta = core.get_meta(dst_pos)
 
 				if to == "side" then
 					add_container_lazy(meta, to, dst_name, {"fuel", "main", "src", "in"})
@@ -813,7 +813,7 @@ minetest.register_abm({
 
 -- hopper recipe
 
-minetest.register_craft({
+core.register_craft({
 	output = "hopper:hopper",
 	recipe = {
 		{"default:steel_ingot", "default:chest", "default:steel_ingot"},
@@ -823,16 +823,16 @@ minetest.register_craft({
 
 -- side hopper to hopper recipe
 
-minetest.register_craft({
+core.register_craft({
 	output = "hopper:hopper",
 	recipe = {{"hopper:hopper_side"}}
 })
 
 -- void hopper recipe
 
-if minetest.get_modpath("teleport_potion") then
+if core.get_modpath("teleport_potion") then
 
-	minetest.register_craft({
+	core.register_craft({
 		output = "hopper:hopper_void",
 		recipe = {
 			{"default:steel_ingot", "default:chest", "default:steel_ingot"},
@@ -840,7 +840,7 @@ if minetest.get_modpath("teleport_potion") then
 		}
 	})
 else
-	minetest.register_craft({
+	core.register_craft({
 		output = "hopper:hopper_void",
 		recipe = {
 			{"default:steel_ingot", "default:chest", "default:steel_ingot"},
@@ -852,7 +852,7 @@ end
 
 -- add lucky blocks
 
-if minetest.get_modpath("lucky_block") then
+if core.get_modpath("lucky_block") then
 
 	lucky_block:add_blocks({
 		{"dro", {"hopper:hopper"}, 3},
