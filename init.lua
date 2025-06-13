@@ -695,18 +695,20 @@ core.register_abm({
 		local dst_name = core.get_node(dst_pos).name
 
 		-- hopper owner
-		local owner = core.get_meta(pos):get_string("owner")
+		local hopper_owner = core.get_meta(pos):get_string("owner")
 
 		-- the hopper itself interacts as fake player
 		local player = {
 			is_player = function() return false end,
-			get_player_name = function() return owner end,
+			get_player_name = function() return hopper_owner end,
 			is_fake_player = ":hopper",
 			get_wielded_item = function() return ItemStack(nil) end
 		}
 
-		if core.check_player_privs(owner, "protection_bypass") then
-			owner = ""
+		local hopper_owner_has_protection_bypass = false
+
+		if core.check_player_privs(hopper_owner, "protection_bypass") then
+			hopper_owner_has_protection_bypass = true
 		end
 
 		local to
@@ -737,7 +739,8 @@ core.register_abm({
 		local c_owner = core.get_meta(src_pos):get_string("owner") or ""
 
 		-- if protection_bypass or actual owner or container not owned
-		if owner == "" or owner == c_owner or c_owner == "" then
+		if hopper_owner_has_protection_bypass
+		or hopper_owner == c_owner or c_owner == "" then
 
 			if src_inv then
 
@@ -772,7 +775,8 @@ core.register_abm({
 
 		c_owner = core.get_meta(dst_pos):get_string("owner") or ""
 
-		if owner == "" or owner == c_owner or c_owner == "" then
+		if hopper_owner_has_protection_bypass
+		or hopper_owner == c_owner or c_owner == "" then
 
 			if dst_inv then
 
