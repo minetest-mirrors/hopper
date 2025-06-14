@@ -21,6 +21,7 @@ end
 
 local containers = {
 	{"top", "hopper:hopper", "main", true},
+	{"top", "hopper:hopper_side", "main", true},
 	{"bottom", "hopper:hopper", "main", true},
 	{"side", "hopper:hopper", "main", true},
 	{"side", "hopper:hopper_side", "main", true},
