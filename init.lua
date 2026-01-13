@@ -1,7 +1,7 @@
 
 -- global
 
-hopper = {version = "20250504"}
+hopper = {version = "20260113"}
 
 -- Translation and mod check
 
@@ -449,7 +449,7 @@ core.register_node("hopper:hopper_void", {
 		local pos = pointed_thing.under
 		local name = player:get_player_name()
 		local node = core.get_node(pos).name
-		local ok
+		local ok, has_void
 
 		if core.is_protected(pos, name) then
 			core.record_protection_violation(pos, name)
@@ -457,15 +457,27 @@ core.register_node("hopper:hopper_void", {
 		end
 
 		for _ = 1, #containers do
+
 			if node == containers[_][2] then
+
 				ok = true
+
+				if containers[_][1] == "void" then
+					has_void = true
+				end
 			end
 		end
 
 		if ok then
-			core.chat_send_player(name, S("Output container set")
-				.. " " .. core.pos_to_string(pos))
-			player_void[name] = pos
+
+			if has_void then
+				core.chat_send_player(name, S("Output container set")
+					.. " " .. core.pos_to_string(pos))
+				player_void[name] = pos
+			else
+				core.chat_send_player(name, S("Container without void hopper support!"))
+				player_void[name] = nil
+			end
 		else
 			core.chat_send_player(name, S("Not a registered container!"))
 			player_void[name] = nil
