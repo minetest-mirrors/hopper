@@ -1,12 +1,13 @@
 
 -- global
 
-hopper = {version = "20260113"}
+hopper = {version = "20260317"}
 
--- Translation and mod check
+-- Translation, mod check and locals
 
 local S = core.get_translator("hopper")
 local mod_screwdriver = core.get_modpath("screwdriver")
+local get_node = core.get_node
 
 -- creative check
 
@@ -189,6 +190,19 @@ if core.get_modpath("wine") then
 	})
 end
 
+-- xanadu specific
+
+if core.get_modpath("xanadu") then
+
+	hopper:add_container({
+		{"side", "homedecor:refrigerator", "main"},
+		{"top", "homedecor:refrigerator", "main"},
+		{"void", "homedecor:refrigerator", "main"},
+		{"side", "homedecor:refrigerator_locked", "main"},
+		{"void", "homedecor:refrigerator_locked", "main"}
+	})
+end
+
 -- formspec
 
 local function get_hopper_formspec(pos)
@@ -233,15 +247,15 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 	end
 
 	-- make sure we aren't replacing something we shouldnt
-	local node = core.get_node_or_nil(pos)
-	local def = node and core.registered_nodes[node.name]
+	local node = get_node(pos)
+	local def = core.registered_nodes[node.name]
 
 	if def and not def.buildable_to then return itemstack end
 
 	if pointed_thing.type == "node"
 	and placer and not placer:get_player_control().sneak then
 
-		local nn = core.get_node(pointed_thing.under).name
+		local nn = get_node(pointed_thing.under).name
 
 		if core.registered_nodes[nn]
 		and core.registered_nodes[nn].on_rightclick then
@@ -448,7 +462,7 @@ core.register_node("hopper:hopper_void", {
 
 		local pos = pointed_thing.under
 		local name = player:get_player_name()
-		local node = core.get_node(pos).name
+		local node = get_node(pos).name
 		local ok, has_void
 
 		if core.is_protected(pos, name) then
@@ -492,7 +506,7 @@ core.register_node("hopper:hopper_void", {
 		if pointed_thing.type == "node"
 		and placer and not placer:get_player_control().sneak then
 
-			local nn = core.get_node(pointed_thing.under).name
+			local nn = get_node(pointed_thing.under).name
 
 			if core.registered_nodes[nn]
 			and core.registered_nodes[nn].on_rightclick then
@@ -511,8 +525,8 @@ core.register_node("hopper:hopper_void", {
 		end
 
 		-- make sure we aren't replacing something we shouldnt
-		local node = core.get_node_or_nil(pos)
-		local def = node and core.registered_nodes[node.name]
+		local node = get_node(pos)
+		local def = core.registered_nodes[node.name]
 		if def and not def.buildable_to then
 			return itemstack
 		end
@@ -702,10 +716,10 @@ core.register_abm({
 
 		-- get node above hopper
 		local src_pos = {x = pos.x, y = pos.y + 1, z = pos.z}
-		local src_name = core.get_node(src_pos).name
+		local src_name = get_node(src_pos).name
 
 		-- get node at other end of spout
-		local dst_name = core.get_node(dst_pos).name
+		local dst_name = get_node(dst_pos).name
 
 		-- hopper owner
 		local hopper_owner = core.get_meta(pos):get_string("owner")
