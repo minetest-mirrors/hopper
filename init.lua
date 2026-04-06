@@ -121,11 +121,8 @@ function hopper:add_container(list)
 
 		for _, p in pairs(cb_nodes) do
 
-			if string.find(cols[2], p) then
-
-				cols[4] = not cb_nodes
-
-				break
+			if cols[2]:find(p) then
+				cols[4] = not cb_nodes ; break
 			end
 		end
 
@@ -242,8 +239,7 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 	local name = placer:get_player_name() or ""
 
 	if core.is_protected(pos, name) then
-		core.record_protection_violation(pos, name)
-		return itemstack
+		core.record_protection_violation(pos, name) ; return itemstack
 	end
 
 	-- make sure we aren't replacing something we shouldnt
@@ -263,18 +259,16 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 		end
 	end
 
-	if x == -1 then
-		core.set_node(pos, {name = "hopper:hopper_side", param2 = 0})
+	local p2
 
-	elseif x == 1 then
-		core.set_node(pos, {name = "hopper:hopper_side", param2 = 2})
+	if x == -1 then p2 = 0
+	elseif x == 1 then p2 = 2
+	elseif z == -1 then p2 = 3
+	elseif z == 1 then p2 = 1
+	end
 
-	elseif z == -1 then
-		core.set_node(pos, {name = "hopper:hopper_side", param2 = 3})
-
-	elseif z == 1 then
-		core.set_node(pos, {name = "hopper:hopper_side", param2 = 1})
-
+	if p2 then
+		core.set_node(pos, {name = "hopper:hopper_side", param2 = p2})
 	else
 		core.set_node(pos, {name = "hopper:hopper"})
 	end
@@ -285,10 +279,8 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 
 	-- get and set metadata
 	local meta = core.get_meta(pos)
-	local inv = meta:get_inventory()
 
-	inv:set_size("main", 4*4)
-
+	meta:get_inventory():set_size("main", 4*4)
 	meta:set_string("owner", name)
 
 	return itemstack
@@ -322,10 +314,7 @@ core.register_node("hopper:hopper", {
 	on_place = hopper_place,
 
 	can_dig = function(pos, player)
-
-		local inv = core.get_meta(pos):get_inventory()
-
-		return inv:is_empty("main")
+		return core.get_meta(pos):get_inventory():is_empty("main")
 	end,
 
 	on_rightclick = function(pos, node, clicker, itemstack)
@@ -392,10 +381,7 @@ core.register_node("hopper:hopper_side", {
 	on_place = hopper_place,
 
 	can_dig = function(pos, player)
-
-		local inv = core.get_meta(pos):get_inventory()
-
-		return inv:is_empty("main")
+		return core.get_meta(pos):get_inventory():is_empty("main")
 	end,
 
 	on_rightclick = function(pos, node, clicker, itemstack)
@@ -466,8 +452,7 @@ core.register_node("hopper:hopper_void", {
 		local ok, has_void
 
 		if core.is_protected(pos, name) then
-			core.record_protection_violation(pos, name)
-			return itemstack
+			core.record_protection_violation(pos, name) ; return itemstack
 		end
 
 		for _ = 1, #containers do
@@ -538,10 +523,8 @@ core.register_node("hopper:hopper_void", {
 		core.set_node(pos, {name = "hopper:hopper_void", param2 = 0})
 
 		local meta = core.get_meta(pos)
-		local inv = meta:get_inventory()
 
-		inv:set_size("main", 4*4)
-
+		meta:get_inventory():set_size("main", 4*4)
 		meta:set_string("owner", name)
 		meta:set_string("void", core.pos_to_string(player_void[name]))
 		meta:set_string("infotext", S("Void Hopper\nConnected to @1",
@@ -551,10 +534,7 @@ core.register_node("hopper:hopper_void", {
 	end,
 
 	can_dig = function(pos, player)
-
-		local inv = core.get_meta(pos):get_inventory()
-
-		return inv:is_empty("main")
+		return core.get_meta(pos):get_inventory():is_empty("main")
 	end,
 
 	on_rightclick = function(pos, node, clicker, itemstack)
@@ -592,37 +572,32 @@ core.register_node("hopper:hopper_void", {
 
 local transfer = function(src, srcpos, dst, dstpos, allowed, finished)
 
-	-- source inventory
-	local inv = core.get_meta(srcpos):get_inventory()
-
-	-- destination inventory
-	local inv2 = core.get_meta(dstpos):get_inventory()
+	local srcinv = core.get_meta(srcpos):get_inventory()
+	local dstinv = core.get_meta(dstpos):get_inventory()
 
 	-- check for empty source or no inventory
-	if not inv or not inv2 or inv:is_empty(src) == true then return end
+	if not srcinv or not dstinv or srcinv:is_empty(src) then return end
 
-	local stack, item, max
+	local stack, item
 
 	-- transfer item
-	for i = 1, inv:get_size(src) do
+	for i = 1, srcinv:get_size(src) do
 
-		stack = inv:get_stack(src, i)
+		stack = srcinv:get_stack(src, i)
 		item = stack:get_name()
 
-		-- if slot not empty and room for item in destination
-		if item ~= "" and inv2:room_for_item(dst, item) then
+		-- if slot filled and room for item in destination
+		if item ~= "" and dstinv:room_for_item(dst, item) then
 
 			local take = stack:take_item(1)
 
 			if allowed(i, take) then
 
-				inv2:add_item(dst, take)
-				inv:set_stack(src, i, stack)
+				dstinv:add_item(dst, take)
+				srcinv:set_stack(src, i, stack)
 
-				finished(i, take)
+				finished(i, take) ; return
 			end
-
-			return
 		end
 	end
 end
@@ -653,7 +628,6 @@ end
 -- hopper workings
 
 core.register_abm({
-
 	label = "Hopper suction and transfer",
 	nodenames = {"hopper:hopper", "hopper:hopper_side", "hopper:hopper_void"},
 	interval = 1,
@@ -662,18 +636,19 @@ core.register_abm({
 
 	action = function(pos, node, active_object_count, active_object_count_wider)
 
-		local inv = core.get_meta(pos):get_inventory()
+		local inv = core.get_meta(pos):get_inventory() ; if not inv then return end
 
 		for _,object in pairs(core.get_objects_inside_radius(pos, 1)) do
 
-			if not object:is_player()
-			and object:get_luaentity() and object:get_luaentity().name == "__builtin:item"
-			and inv and inv:room_for_item("main",
-					ItemStack(object:get_luaentity().itemstring)) then
+			if not object:is_player() and object:get_luaentity()
+			and object:get_luaentity().name == "__builtin:item" then
 
-				if object:get_pos().y - pos.y > 0.25 then
+				local item = ItemStack(object:get_luaentity().itemstring)
 
-					inv:add_item("main", ItemStack(object:get_luaentity().itemstring))
+				if object:get_pos().y - pos.y > 0.25
+				and inv:room_for_item("main", item) then
+
+					inv:add_item("main", item)
 
 					object:get_luaentity().itemstring = ""
 					object:remove()
@@ -689,21 +664,15 @@ core.register_abm({
 			local face = node.param2
 
 			if face == 0 then dst_pos = {x = pos.x - 1, y = pos.y, z = pos.z}
-
 			elseif face == 1 then dst_pos = {x = pos.x, y = pos.y, z = pos.z + 1}
-
 			elseif face == 2 then dst_pos = {x = pos.x + 1, y = pos.y, z = pos.z}
-
 			elseif face == 3 then dst_pos = {x = pos.x, y = pos.y, z = pos.z - 1}
-			else
-				return
+			else return
 			end
 
 		elseif node.name == "hopper:hopper_void" then
 
-			local meta = core.get_meta(pos)
-
-			if not meta then return end
+			local meta = core.get_meta(pos) ; if not meta then return end
 
 			dst_pos = core.string_to_pos(meta:get_string("void"))
 
@@ -743,15 +712,12 @@ core.register_abm({
 		elseif node.name == "hopper:hopper_side" then to = "side"
 		elseif node.name == "hopper:hopper_void" then to = "void" end
 
-		local where, name, inv, run_cb, src_inv, dst_inv, src_cb, dst_cb
+		local src_inv, dst_inv, src_cb, dst_cb
 
 		-- do for loop here for api check
 		for n = 1, #containers do
 
-			where = containers[n][1]
-			name = containers[n][2]
-			inv = containers[n][3]
-			run_cb = containers[n][4]
+			local where, name, inv, run_cb = unpack(containers[n])
 
 			if where == "top" and src_name == name then
 				src_inv = inv -- from hopper into destionation container
