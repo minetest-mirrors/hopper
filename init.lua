@@ -1,7 +1,7 @@
 
 -- global
 
-hopper = {version = "20260317"}
+hopper = {version = "20260815"}
 
 -- Translation, mod check and locals
 
@@ -231,11 +231,9 @@ end
 
 -- check where pointing and set normal or side-hopper
 
-local hopper_place = function(itemstack, placer, pointed_thing)
+local function hopper_place(itemstack, placer, pointed_thing)
 
 	local pos = pointed_thing.above
-	local x = pointed_thing.under.x - pos.x
-	local z = pointed_thing.under.z - pos.z
 	local name = placer:get_player_name() or ""
 
 	if core.is_protected(pos, name) then
@@ -259,13 +257,8 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 		end
 	end
 
-	local p2
-
-	if x == -1 then p2 = 0
-	elseif x == 1 then p2 = 2
-	elseif z == -1 then p2 = 3
-	elseif z == 1 then p2 = 1
-	end
+	local x, z = pointed_thing.under.x - pos.x, pointed_thing.under.z - pos.z
+	local p2 = (x == -1 and 0) or (x == 1 and 2) or (z == -1 and 3) or (z == 1 and 1)
 
 	if p2 then
 		core.set_node(pos, {name = "hopper:hopper_side", param2 = p2})
@@ -273,9 +266,7 @@ local hopper_place = function(itemstack, placer, pointed_thing)
 		core.set_node(pos, {name = "hopper:hopper"})
 	end
 
-	if not check_creative(placer:get_player_name()) then
-		itemstack:take_item()
-	end
+	if not check_creative(name) then itemstack:take_item() end
 
 	-- get and set metadata
 	local meta = core.get_meta(pos)
@@ -299,15 +290,12 @@ core.register_node("hopper:hopper", {
 		type = "fixed",
 		fixed = {
 			--funnel walls
-			{-0.5, 0.0, 0.4, 0.5, 0.5, 0.5},
-			{0.4, 0.0, -0.5, 0.5, 0.5, 0.5},
-			{-0.5, 0.0, -0.5, -0.4, 0.5, 0.5},
-			{-0.5, 0.0, -0.5, 0.5, 0.5, -0.4},
+			{-0.5, 0.0, 0.4, 0.5, 0.5, 0.5}, {0.4, 0.0, -0.5, 0.5, 0.5, 0.5},
+			{-0.5, 0.0, -0.5, -0.4, 0.5, 0.5}, {-0.5, 0.0, -0.5, 0.5, 0.5, -0.4},
 			--funnel base
 			{-0.5, 0.0, -0.5, 0.5, 0.1, 0.5},
 			--spout
-			{-0.3, -0.3, -0.3, 0.3, 0.0, 0.3},
-			{-0.15, -0.3, -0.15, 0.15, -0.5, 0.15}
+			{-0.3, -0.3, -0.3, 0.3, 0.0, 0.3}, {-0.15, -0.3, -0.15, 0.15, -0.5, 0.15}
 		}
 	},
 
@@ -366,15 +354,12 @@ core.register_node("hopper:hopper_side", {
 		type = "fixed",
 		fixed = {
 			--funnel walls
-			{-0.5, 0.0, 0.4, 0.5, 0.5, 0.5},
-			{0.4, 0.0, -0.5, 0.5, 0.5, 0.5},
-			{-0.5, 0.0, -0.5, -0.4, 0.5, 0.5},
-			{-0.5, 0.0, -0.5, 0.5, 0.5, -0.4},
+			{-0.5, 0.0, 0.4, 0.5, 0.5, 0.5}, {0.4, 0.0, -0.5, 0.5, 0.5, 0.5},
+			{-0.5, 0.0, -0.5, -0.4, 0.5, 0.5}, {-0.5, 0.0, -0.5, 0.5, 0.5, -0.4},
 			--funnel base
 			{-0.5, 0.0, -0.5, 0.5, 0.1, 0.5},
 			--spout
-			{-0.3, -0.3, -0.3, 0.3, 0.0, 0.3},
-			{-0.7, -0.3, -0.15, 0.15, 0.0, 0.15}
+			{-0.3, -0.3, -0.3, 0.3, 0.0, 0.3}, {-0.7, -0.3, -0.15, 0.15, 0.0, 0.15}
 		}
 	},
 
@@ -433,10 +418,8 @@ core.register_node("hopper:hopper_void", {
 		type = "fixed",
 		fixed = {
 			--funnel walls
-			{-0.5, 0.0, 0.4, 0.5, 0.5, 0.5},
-			{0.4, 0.0, -0.5, 0.5, 0.5, 0.5},
-			{-0.5, 0.0, -0.5, -0.4, 0.5, 0.5},
-			{-0.5, 0.0, -0.5, 0.5, 0.5, -0.4},
+			{-0.5, 0.0, 0.4, 0.5, 0.5, 0.5}, {0.4, 0.0, -0.5, 0.5, 0.5, 0.5},
+			{-0.5, 0.0, -0.5, -0.4, 0.5, 0.5}, {-0.5, 0.0, -0.5, 0.5, 0.5, -0.4},
 			--funnel base
 			{-0.5, 0.0, -0.5, 0.5, 0.1, 0.5}
 		}
@@ -570,7 +553,7 @@ core.register_node("hopper:hopper_void", {
 
 -- transfer function
 
-local transfer = function(src, srcpos, dst, dstpos, allowed, finished)
+local function transfer(src, srcpos, dst, dstpos, allowed, finished)
 
 	local srcinv = core.get_meta(srcpos):get_inventory()
 	local dstinv = core.get_meta(dstpos):get_inventory()
@@ -853,7 +836,8 @@ if core.get_modpath("lucky_block") then
 
 	lucky_block:add_blocks({
 		{"dro", {"hopper:hopper"}, 3},
-		{"nod", "default:lava_source", 1}
+		{"nod", "default:lava_source", 1},
+		{"dro", {"hopper:hopper_void"}, 1}
 	})
 end
 

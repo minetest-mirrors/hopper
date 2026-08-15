@@ -25,4 +25,4 @@ Change log:
 - 1.7 - Optimized code and added container owner check (thanks nixnoxus)
 - 1.8 - Added container autodetection with setting "lazy_container_support" and quiet transfer(thanks nixnoxus)
 
-Lucky Blocks: 2
+Lucky Blocks: 3
