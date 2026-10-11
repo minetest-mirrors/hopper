@@ -134,9 +134,9 @@ end
 -- default containers
 
 hopper:add_container({
-	{"top", "default:chest", "main"},
-	{"bottom", "default:chest", "main"},
-	{"side", "default:chest", "main"},
+	{"top", "default:chest", "main"}, -- taking from container on top of hopper
+	{"bottom", "default:chest", "main"}, -- putting in container below hopper
+	{"side", "default:chest", "main"}, -- putting in container beside hopper
 
 	{"top", "default:furnace", "dst"},
 	{"bottom", "default:furnace", "src"},
@@ -696,16 +696,15 @@ core.register_abm({
 		elseif node.name == "hopper:hopper_side" then to = "side"
 		elseif node.name == "hopper:hopper_void" then to = "void" end
 
-		local src_inv, dst_inv, src_cb, dst_cb
+		local src_table = {}
+		local dst_inv, dst_cb
 
-		-- do for loop here for api check
 		for n = 1, #containers do
 
 			local where, name, inv, run_cb = unpack(containers[n])
 
 			if where == "top" and src_name == name then
-				src_inv = inv -- from hopper into destionation container
-				src_cb = run_cb
+				table.insert(src_table, {inv = inv, cb = run_cb})
 			elseif where == to and dst_name == name then
 				dst_inv = inv
 				dst_cb = run_cb
@@ -719,27 +718,33 @@ core.register_abm({
 		if hopper_owner_has_protection_bypass
 		or hopper_owner == c_owner or c_owner == "" then
 
-			if src_inv then
+			if #src_table > 0 then
 
-				-- run callbacks from source node or not
-				local src_def = src_cb and registered_nodes[src_name]
-				local allowed = function(i, stack)
+				for _, item in ipairs(src_table) do
 
-					return not src_def
-					or not src_def.allow_metadata_inventory_take
-					or src_def.allow_metadata_inventory_take(src_pos, src_inv, i,
-							stack, player) > 0
+					local src_inv = item.inv
+					local src_cb  = item.cb
+
+					-- run callbacks from source node or not
+					local src_def = src_cb and registered_nodes[src_name]
+					local allowed = function(i, stack)
+
+						return not src_def
+						or not src_def.allow_metadata_inventory_take
+						or src_def.allow_metadata_inventory_take(src_pos, src_inv, i,
+								stack, player) > 0
+					end
+
+					local finished = function(i, stack)
+
+						return not src_def
+						or not src_def.on_metadata_inventory_take
+						or src_def.on_metadata_inventory_take(src_pos, src_inv, i, stack,
+								player)
+					end
+
+					transfer(src_inv, src_pos, "main", pos, allowed, finished)
 				end
-
-				local finished = function(i, stack)
-
-					return not src_def
-					or not src_def.on_metadata_inventory_take
-					or src_def.on_metadata_inventory_take(src_pos, src_inv, i, stack,
-							player)
-				end
-
-				transfer(src_inv, src_pos, "main", pos, allowed, finished)
 
 			elseif src_name ~= "ignore"
 			and lazy and not string.find(src_name, "^hopper:") then
